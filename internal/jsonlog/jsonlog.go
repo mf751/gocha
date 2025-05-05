@@ -48,12 +48,12 @@ func (logger *Logger) PrintInfo(message string, properties map[string]string) {
 	logger.print(LevelInfo, message, properties)
 }
 
-func (logger *Logger) PrintError(message string, properties map[string]string) {
-	logger.print(LevelError, message, properties)
+func (logger *Logger) PrintError(err error, properties map[string]string) {
+	logger.print(LevelError, err.Error(), properties)
 }
 
-func (logger *Logger) PrintFatal(message string, properties map[string]string) {
-	logger.print(LevelFatal, message, properties)
+func (logger *Logger) PrintFatal(err error, string, properties map[string]string) {
+	logger.print(LevelFatal, err.Error(), properties)
 	os.Exit(1)
 }
 

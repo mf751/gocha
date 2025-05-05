@@ -52,7 +52,7 @@ func (logger *Logger) PrintError(err error, properties map[string]string) {
 	logger.print(LevelError, err.Error(), properties)
 }
 
-func (logger *Logger) PrintFatal(err error, string, properties map[string]string) {
+func (logger *Logger) PrintFatal(err error, properties map[string]string) {
 	logger.print(LevelFatal, err.Error(), properties)
 	os.Exit(1)
 }

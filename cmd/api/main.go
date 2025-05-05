@@ -1,19 +1,75 @@
 package main
 
-import "github.com/mf751/gocha/internal/jsonlog"
+import (
+	"context"
+	"database/sql"
+	"os"
+	"time"
+
+	_ "github.com/lib/pq"
+
+	"github.com/mf751/gocha/internal/data"
+	"github.com/mf751/gocha/internal/jsonlog"
+)
 
 type config struct {
 	port int
+	db   struct {
+		dsn          string
+		maxOpenConns int
+		maxIdleConns int
+		maxIdleTime  string
+	}
 }
 
 type application struct {
 	config config
 	logger *jsonlog.Logger
+	models data.Modles
 }
 
 func main() {
-	app := &application{
-		config: config{port: 5050},
+	var cfg config
+	cfg.port = 5050
+	cfg.db.dsn = ""
+	cfg.db.maxIdleConns = 25
+	cfg.db.maxOpenConns = 25
+	cfg.db.maxIdleTime = "15m"
+
+	logger := jsonlog.New(os.Stdout, jsonlog.LevelInfo)
+
+	db, err := openDB(cfg)
+	if err != nil {
+		logger.PrintFatal(err, nil)
 	}
+	defer db.Close()
+	logger.PrintInfo("Database connection established", nil)
+
+	app := &application{
+		config: cfg,
+		models: data.NewModels(db),
+		logger: logger,
+	}
+
 	app.serve()
+}
+
+func openDB(cfg config) (*sql.DB, error) {
+	db, err := sql.Open("postgres", cfg.db.dsn)
+	if err != nil {
+		return nil, err
+	}
+
+	db.SetMaxIdleConns(cfg.db.maxIdleConns)
+	db.SetMaxOpenConns(cfg.db.maxOpenConns)
+	duration, err := time.ParseDuration(cfg.db.maxIdleTime)
+	if err != nil {
+		return nil, err
+	}
+	db.SetConnMaxIdleTime(duration)
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	err = db.PingContext(ctx)
+	return db, err
 }

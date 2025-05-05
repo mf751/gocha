@@ -1,6 +1,7 @@
 package data
 
 import (
+	"database/sql"
 	"errors"
 	"time"
 )
@@ -27,4 +28,8 @@ func (user *User) isAnonymous() bool {
 type password struct {
 	plainText *string
 	hash      []byte
+}
+
+type UserModel struct {
+	DB *sql.DB
 }

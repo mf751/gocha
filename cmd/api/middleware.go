@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/mf751/gocha/internal/data"
+	"github.com/mf751/gocha/internal/validator"
 )
 
 func (app *application) recoverPanic(next http.Handler) http.Handler {
@@ -40,6 +41,11 @@ func (app *application) authenticate(next http.Handler) http.Handler {
 
 		vdtr := validator.New()
 
-		// if data.
+		if data.ValidateTokenPlainText(vdtr, token); !vdtr.Valid() {
+			app.invalidAuthenticationTokenResponse(w, r)
+			return
+		}
+
+		// user, err := app.mod
 	})
 }

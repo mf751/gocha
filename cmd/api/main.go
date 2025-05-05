@@ -6,6 +6,7 @@ import (
 	"os"
 	"time"
 
+	"github.com/joho/godotenv"
 	_ "github.com/lib/pq"
 
 	"github.com/mf751/gocha/internal/data"
@@ -37,9 +38,16 @@ type application struct {
 }
 
 func main() {
+	logger := jsonlog.New(os.Stdout, jsonlog.LevelInfo)
+
+	err := godotenv.Load()
+	if err != nil {
+		logger.PrintFatal(err, nil)
+	}
+
 	var cfg config
 	cfg.port = 5050
-	cfg.db.dsn = ""
+	cfg.db.dsn = os.Getenv("PQDSN")
 	cfg.db.maxIdleConns = 25
 	cfg.db.maxOpenConns = 25
 	cfg.db.maxIdleTime = "15m"
@@ -47,8 +55,6 @@ func main() {
 	cfg.limiter.rps = 5
 	cfg.limiter.burst = 8
 	cfg.limiter.enabled = true
-
-	logger := jsonlog.New(os.Stdout, jsonlog.LevelInfo)
 
 	db, err := openDB(cfg)
 	if err != nil {

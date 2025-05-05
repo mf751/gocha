@@ -14,13 +14,13 @@ var Upgrader = websocket.Upgrader{
 }
 
 func (app *application) serveWS(w http.ResponseWriter, r *http.Request) {
-	conn, err := Upgrader.Upgrade(w, r, nil)
+	_, err := Upgrader.Upgrade(w, r, nil)
 	if err != nil {
 		log.Println(err)
 		return
 	}
 
-	client := newClient(conn, app)
+	// client := newClient(conn, app)
 }
 
 func checkOrigin(r *http.Request) bool {

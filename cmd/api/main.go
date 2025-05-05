@@ -20,6 +20,14 @@ type config struct {
 		maxIdleConns int
 		maxIdleTime  string
 	}
+	cors struct {
+		trustedOrigins []string
+	}
+	limiter struct {
+		rps     float64
+		burst   int
+		enabled bool
+	}
 }
 
 type application struct {
@@ -35,6 +43,10 @@ func main() {
 	cfg.db.maxIdleConns = 25
 	cfg.db.maxOpenConns = 25
 	cfg.db.maxIdleTime = "15m"
+	cfg.cors.trustedOrigins = []string{"http://localhost:5173"}
+	cfg.limiter.rps = 5
+	cfg.limiter.burst = 8
+	cfg.limiter.enabled = true
 
 	logger := jsonlog.New(os.Stdout, jsonlog.LevelInfo)
 

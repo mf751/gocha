@@ -15,5 +15,5 @@ func (app *application) routes() http.Handler {
 	router.HandlerFunc(http.MethodGet, "/v1/healthcheck", app.healthCheckHandler)
 
 	router.HandlerFunc(http.MethodGet, "/ws", app.serveWS)
-	return app.recoverPanic(app.authenticate(router))
+	return app.recoverPanic(app.enableCORS(app.rateLimit(app.authenticate(router))))
 }

@@ -68,7 +68,7 @@ func (app *application) authenticate(next http.Handler) http.Handler {
 	})
 }
 
-func (app *application) requireAuthentication(next http.Handler) http.Handler {
+func (app *application) requireAuthentication(next http.HandlerFunc) http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		user := app.contextGetUser(r)
 		if user.IsAnonymous() {
@@ -80,7 +80,7 @@ func (app *application) requireAuthentication(next http.Handler) http.Handler {
 	})
 }
 
-func (app *application) requireActivation(next http.Handler) http.Handler {
+func (app *application) requireActivation(next http.HandlerFunc) http.HandlerFunc {
 	fn := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		user := app.contextGetUser(r)
 		if !user.Activated {
@@ -110,6 +110,8 @@ func (app *application) enableCORS(next http.Handler) http.Handler {
 				}
 			}
 		}
+
+		next.ServeHTTP(w, r)
 	})
 }
 

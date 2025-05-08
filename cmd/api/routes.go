@@ -14,13 +14,42 @@ func (app *application) routes() http.Handler {
 
 	router.HandlerFunc(http.MethodGet, "/v1/healthcheck", app.healthCheckHandler)
 
-	router.HandlerFunc(http.MethodPost, "/v1/users", app.registerUserHandler)
+	router.HandlerFunc(
+		http.MethodPost,
+		"/v1/users",
+		app.registerUserHandler,
+	)
 	router.HandlerFunc(
 		http.MethodPost,
 		"/v1/tokens/authentication",
 		app.createAuthenticationTokenHandler,
 	)
 
+	router.HandlerFunc(
+		http.MethodPost,
+		"/v1/chats",
+		app.requireAuthentication(app.createChatHandler),
+	)
+	router.HandlerFunc(
+		http.MethodDelete,
+		"/v1/chats",
+		app.requireAuthentication(app.deleteChatHandler),
+	)
+	router.HandlerFunc(
+		http.MethodGet,
+		"/v1/chat/users",
+		app.requireAuthentication(app.getChatUsersHandler),
+	)
+	router.HandlerFunc(
+		http.MethodPost,
+		"/v1/chat/join",
+		app.requireAuthentication(app.joinChatHandler),
+	)
+	router.HandlerFunc(
+		http.MethodPost,
+		"/v1/chat/leave",
+		app.requireAuthentication(app.leaveChatHandler),
+	)
 	router.HandlerFunc(http.MethodGet, "/ws", app.requireAuthentication(app.serveWS))
 
 	return app.recoverPanic(app.enableCORS(app.rateLimit(app.authenticate(router))))

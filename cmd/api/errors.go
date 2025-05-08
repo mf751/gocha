@@ -65,7 +65,7 @@ func (app *application) inactiveAccountResponse(w http.ResponseWriter, r *http.R
 
 func (app *application) rateLimitExceededResponse(w http.ResponseWriter, r *http.Request) {
 	message := "rate limit exceeded"
-	app.errorResponse(w, r, http.StatusUnauthorized, message)
+	app.errorResponse(w, r, http.StatusTooManyRequests, message)
 }
 
 func (app *application) badRequestResponse(w http.ResponseWriter, r *http.Request, err error) {

@@ -47,10 +47,11 @@ func (app *application) registerUserHandler(w http.ResponseWriter, r *http.Reque
 		case errors.Is(err, data.ErrDuplicateEmial):
 			vdtr.AddError("email", "a user with this email address already exists")
 			app.failedValidationResponse(w, r, vdtr.Errors)
+			return
 		default:
 			app.serverErrorResponse(w, r, err)
+			return
 		}
-		return
 	}
 
 	// --[ Activation Tokens ]--

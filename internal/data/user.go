@@ -20,7 +20,7 @@ type User struct {
 	Email     string    `json:"email"`
 	Password  password  `json:"-"`
 	Activated bool      `json:"activated"`
-	Version   int       `json:"-"`
+	// Version   int       `json:"-"`
 }
 
 var (
@@ -188,7 +188,7 @@ func (model UserModel) GetForToken(tokenScope, tokenPlainText string) (*User, er
 	sqlQuery := `
 SELECT users.id, users.created_at, users.name, users.email, users.password_hash, users.activated
 FROM users
-INNER JOIN token 
+INNER JOIN tokens
 ON users.id = tokens.user_id
 WHERE tokens.hash = $1
 AND tokens.scope = $2
@@ -208,6 +208,35 @@ AND tokens.expiry > $3
 		&user.Name,
 		&user.Email,
 		&user.Password.hash,
+		&user.Activated,
+	)
+	if err != nil {
+		switch {
+		case errors.Is(err, sql.ErrNoRows):
+			return nil, ErrRecordNotFound
+		default:
+			return nil, err
+		}
+	}
+	return &user, nil
+}
+
+func (model UserModel) GetByID(ID uuid.UUID) (*User, error) {
+	sqlQuery := `
+SELECT name, created_at, password_hash, email, activated FROM users
+WHERE id = $1
+	`
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	user := User{
+		ID: ID,
+	}
+	err := model.DB.QueryRowContext(ctx, sqlQuery, ID).Scan(
+		&user.Name,
+		&user.CreateAt,
+		&user.Password.hash,
+		&user.Email,
 		&user.Activated,
 	)
 	if err != nil {

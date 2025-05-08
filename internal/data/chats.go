@@ -37,6 +37,11 @@ type ChatUser struct {
 	IsAdmin bool `json:"is_admin"`
 }
 
+type ChatWithLastMessage struct {
+	Chat        Chat    `json:"chat"`
+	LastMessage Message `json:"last_message"`
+}
+
 func ValidateChatName(vdtr *validator.Validator, name string) {
 	vdtr.Check(len(name) <= 50, "name", "cannot be more than 50 characters long")
 	vdtr.Check(name != "", "name", "must be provided")
@@ -197,4 +202,43 @@ AND chat_id = $2
 		return ErrNotInChat
 	}
 	return nil
+}
+
+func (model ChatModel) GetChatMessage(chatID uuid.UUID, size, start int) ([]*Message, error) {
+	sqlQuery := `
+SELECT id, user_id, content, sent, type FROM messages
+WHERE chat_id = $1
+AND deleted = false
+ORDER BY sent DESC
+LIMIT $2
+OFFSET $3
+	`
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	rows, err := model.DB.QueryContext(ctx, sqlQuery, chatID, size, start)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var messages []*Message
+
+	for rows.Next() {
+		var message Message
+		err = rows.Scan(
+			&message.ID,
+			&message.UserID,
+			&message.Content,
+			&message.Sent,
+			&message.Type,
+		)
+		if err != nil {
+			return nil, err
+		}
+		messages = append(messages, &message)
+	}
+
+	err = rows.Err()
+	return messages, err
 }

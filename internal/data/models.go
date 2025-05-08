@@ -11,15 +11,17 @@ var (
 )
 
 type Modles struct {
-	Users  UserModel
-	Tokens TokenModel
-	Chats  ChatModel
+	Users    UserModel
+	Tokens   TokenModel
+	Chats    ChatModel
+	Messages MessagesModel
 }
 
 func NewModels(db *sql.DB) Modles {
 	return Modles{
-		Users:  UserModel{DB: db},
-		Tokens: TokenModel{DB: db},
-		Chats:  ChatModel{DB: db},
+		Users:    UserModel{DB: db},
+		Tokens:   TokenModel{DB: db},
+		Chats:    ChatModel{DB: db},
+		Messages: MessagesModel{DB: db},
 	}
 }

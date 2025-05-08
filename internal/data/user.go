@@ -14,18 +14,19 @@ import (
 )
 
 type User struct {
-	ID        uuid.UUID `json:"id"`
-	CreateAt  time.Time `json:"created_at"`
-	Name      string    `json:"name"`
-	Email     string    `json:"email"`
-	Password  password  `json:"-"`
-	Activated bool      `json:"activated"`
+	ID        uuid.UUID    `json:"id"`
+	CreateAt  sql.NullTime `json:"created_at"`
+	Name      string       `json:"name"`
+	Email     string       `json:"email"`
+	Password  password     `json:"-"`
+	Activated bool         `json:"activated"`
 	// Version   int       `json:"-"`
 }
 
 var (
 	ErrDuplicateEmial = errors.New("duplicate email")
 	AnonymousUser     = &User{}
+	ErrNotAdmin       = errors.New("User is not admin in chat")
 )
 
 func (user *User) IsAnonymous() bool {
@@ -248,4 +249,93 @@ WHERE id = $1
 		}
 	}
 	return &user, nil
+}
+
+func (model UserModel) GetChats(UserID uuid.UUID) ([]*ChatWithLastMessage, error) {
+	sqlQuery := `
+SELECT chats.id, chats.name, chats.owner_id, chats.created_at, chats.is_private, messages.id, messages.sent, messages.user_id, messages.type, messages.content FROM users_chats
+JOIN chats ON chats.id = users_chats.chat_id
+LEFT JOIN LATERAL(
+	SELECT * FROM messages
+	WHERE messages.chat_id = chats.id
+	AND messages.deleted = false
+	ORDER BY messages.sent DESC
+	LIMIT 1
+	) messages ON TRUE
+WHERE users_chats.user_id = $1
+ORDER BY messages.sent DESC NULLS LAST
+	`
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	rows, err := model.DB.QueryContext(ctx, sqlQuery, UserID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var chatsWithLastMessage []*ChatWithLastMessage
+
+	for rows.Next() {
+		var chatWithLastMessage ChatWithLastMessage
+		err = rows.Scan(
+			&chatWithLastMessage.Chat.ID,
+			&chatWithLastMessage.Chat.Name,
+			&chatWithLastMessage.Chat.OwnerID,
+			&chatWithLastMessage.Chat.CreatedAt,
+			&chatWithLastMessage.Chat.IsPrivate,
+			&chatWithLastMessage.LastMessage.ID,
+			&chatWithLastMessage.LastMessage.Sent,
+			&chatWithLastMessage.LastMessage.UserID,
+			&chatWithLastMessage.LastMessage.Type,
+			&chatWithLastMessage.LastMessage.Content,
+		)
+		if err != nil {
+			return nil, err
+		}
+		chatsWithLastMessage = append(chatsWithLastMessage, &chatWithLastMessage)
+	}
+
+	err = rows.Err()
+
+	return chatsWithLastMessage, err
+}
+
+func (model UserModel) IsInChat(userID, chatID uuid.UUID) error {
+	sqlQuery := `
+SELECT TRUE FROM users_chats
+WHERE user_id = $1
+AND chat_id = $2
+	`
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	var temp bool
+	err := model.DB.QueryRowContext(ctx, sqlQuery, userID, chatID).Scan(&temp)
+	if errors.Is(err, sql.ErrNoRows) {
+		return ErrNotInChat
+	}
+
+	return err
+}
+
+func (model UserModel) IsAdmin(userID, chatID uuid.UUID) error {
+	sqlQuery := `
+SELECT is_admin FROM users_chats
+WHERE users_id = $1
+AND chat_id = $2
+	`
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	var isAdmin bool
+	err := model.DB.QueryRowContext(ctx, sqlQuery, userID, chatID).Scan(&isAdmin)
+	if errors.Is(err, sql.ErrNoRows) {
+		return ErrNotInChat
+	}
+	if !isAdmin {
+		return ErrNotAdmin
+	}
+
+	return err
 }

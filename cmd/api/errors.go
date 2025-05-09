@@ -79,8 +79,3 @@ func (app *application) failedValidationResponse(
 ) {
 	app.errorResponse(w, r, http.StatusUnprocessableEntity, errors)
 }
-
-func (app *application) unTrustedOriginErrorResponse(w http.ResponseWriter, r *http.Request) {
-	message := "Origin not trusted"
-	app.errorResponse(w, r, http.StatusForbidden, message)
-}

@@ -58,8 +58,10 @@ func (app *application) authenticate(next http.Handler) http.Handler {
 			switch {
 			case errors.Is(err, data.ErrRecordNotFound):
 				app.invalidAuthenticationTokenResponse(w, r)
+				return
 			default:
 				app.serverErrorResponse(w, r, err)
+				return
 			}
 		}
 		r = app.contextSetUser(r, user)
@@ -96,6 +98,8 @@ func (app *application) enableCORS(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Vary", "Origin")
 		origin := r.Header.Get("Origin")
+		fmt.Println(app.config.cors.trustedOrigins)
+		fmt.Println(origin)
 		if origin != "" {
 			if slices.Contains(app.config.cors.trustedOrigins, origin) {
 				w.Header().Set("Access-Control-Allow-Origin", origin)
@@ -108,8 +112,6 @@ func (app *application) enableCORS(next http.Handler) http.Handler {
 					w.WriteHeader(http.StatusOK)
 					return
 				}
-			} else {
-				app.unTrustedOriginErrorResponse(w, r)
 			}
 		}
 

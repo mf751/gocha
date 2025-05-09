@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"sync"
-	"time"
 
 	"github.com/google/uuid"
 
@@ -80,6 +79,7 @@ func (m *Manager) addClient(client *Client) {
 	m.Lock()
 	defer m.Unlock()
 
+	m.clients[client.chatID] = make(map[*Client]bool)
 	m.clients[client.chatID][client] = true
 }
 

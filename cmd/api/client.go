@@ -2,7 +2,6 @@ package main
 
 import (
 	"encoding/json"
-	"net/http"
 	"time"
 
 	"github.com/google/uuid"
@@ -35,7 +34,7 @@ func newClient(conn *websocket.Conn, manager *Manager, userID, chatID uuid.UUID)
 	}
 }
 
-func (c *Client) readMessages(r *http.Request) {
+func (c *Client) readMessages() {
 	// cleanup function
 	defer func() {
 		c.manager.removeClient(c)
@@ -43,7 +42,10 @@ func (c *Client) readMessages(r *http.Request) {
 
 	// pinging
 	if err := c.connection.SetReadDeadline(time.Now().Add(pongWait)); err != nil {
-		c.manager.app.logError(r, err)
+		c.manager.app.logger.PrintError(
+			err,
+			map[string]string{"failed setting the deadline for the connection": err.Error()},
+		)
 		return
 	}
 
@@ -90,7 +92,7 @@ func (c *Client) pongHandler(pongMessage string) error {
 	return c.connection.SetReadDeadline(time.Now().Add(pongWait))
 }
 
-func (c *Client) writeMessages(r *http.Request) {
+func (c *Client) writeMessages() {
 	defer func() {
 		c.manager.removeClient(c)
 	}()

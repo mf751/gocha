@@ -2,6 +2,7 @@ package main
 
 import (
 	"errors"
+	"fmt"
 	"net/http"
 
 	"github.com/google/uuid"
@@ -11,21 +12,32 @@ import (
 )
 
 var Upgrader = websocket.Upgrader{
-	// CheckOrigin:     checkOrigin,
+	CheckOrigin:     checkOrigin,
 	ReadBufferSize:  1024,
 	WriteBufferSize: 1024,
 }
 
 func (manager *Manager) serveWS(w http.ResponseWriter, r *http.Request) {
-	var input struct {
-		ChatID uuid.UUID `json:"chat_id"`
-	}
-	err := manager.app.readJSON(w, r, &input)
+	authToken := r.URL.Query().Get("token")
+	user, err := manager.app.models.Users.GetForToken(data.ScopeAuthentication, authToken)
 	if err != nil {
-		manager.app.badRequestResponse(w, r, err)
+		switch {
+		case errors.Is(err, data.ErrRecordNotFound):
+			manager.app.invalidAuthenticationTokenResponse(w, r)
+			return
+		default:
+			manager.app.serverErrorResponse(w, r, err)
+			return
+		}
 	}
-	user := manager.app.contextGetUser(r)
-	err = manager.app.models.Users.IsInChat(user.ID, input.ChatID)
+
+	chatID, err := uuid.Parse(r.URL.Query().Get("chat_id"))
+	if err != nil {
+		manager.app.errorResponse(w, r, http.StatusBadRequest, "chat_id not a valid uuid")
+		return
+	}
+
+	err = manager.app.models.Users.IsInChat(user.ID, chatID)
 	if err != nil {
 		switch {
 		case errors.Is(err, data.ErrNotInChat):
@@ -39,26 +51,25 @@ func (manager *Manager) serveWS(w http.ResponseWriter, r *http.Request) {
 
 	conn, err := Upgrader.Upgrade(w, r, nil)
 	if err != nil {
-		manager.app.serverErrorResponse(w, r, err)
 		return
 	}
 
-	client := newClient(conn, manager, user.ID, input.ChatID)
+	client := newClient(conn, manager, user.ID, chatID)
 
 	manager.addClient(client)
 
-	go client.readMessages(r)
-	go client.writeMessages(r)
+	go client.readMessages()
+	go client.writeMessages()
+	fmt.Println(manager.clients)
 }
 
-//
-// func checkOrigin(r *http.Request) bool {
-// 	origin := r.Header.Get("Origin")
-//
-// 	switch origin {
-// 	case "http://localhost:5173":
-// 		return true
-// 	default:
-// 		return false
-// 	}
-// }
+func checkOrigin(r *http.Request) bool {
+	origin := r.Header.Get("Origin")
+
+	switch origin {
+	case "http://localhost:5173":
+		return true
+	default:
+		return false
+	}
+}

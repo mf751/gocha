@@ -2,7 +2,6 @@ package main
 
 import (
 	"encoding/json"
-	"errors"
 	"time"
 
 	"github.com/google/uuid"
@@ -40,13 +39,15 @@ func newClient(
 	}
 }
 
-func (c *Client) readMessages() {
-	// cleanup function
+func (c *Client) pongHandler(pongMessage string) error {
+	return c.connection.SetReadDeadline(time.Now().Add(pongWait))
+}
+
+func (c *Client) writeMessages() {
 	defer func() {
 		c.manager.removeClient(c)
 	}()
 
-	// pinging
 	if err := c.connection.SetReadDeadline(time.Now().Add(pongWait)); err != nil {
 		c.manager.app.logger.PrintError(
 			err,
@@ -58,50 +59,6 @@ func (c *Client) readMessages() {
 	// jumbo frames
 	c.connection.SetReadLimit(512)
 	c.connection.SetPongHandler(c.pongHandler)
-
-	for {
-		_, payload, err := c.connection.ReadMessage()
-		if err != nil {
-			if websocket.IsUnexpectedCloseError(
-				err,
-				websocket.CloseGoingAway,
-				websocket.CloseAbnormalClosure,
-			) {
-				c.manager.app.logger.PrintError(
-					err,
-					map[string]string{"error reading message: ": err.Error()},
-				)
-			}
-			break
-		}
-
-		var request Event
-		if err := json.Unmarshal(payload, &request); err != nil {
-			c.manager.app.logger.PrintError(
-				err,
-				map[string]string{"error unmarshaling event": err.Error()},
-			)
-			continue
-		}
-
-		if err := c.manager.routeEvents(request, c); err != nil {
-			c.manager.app.logger.PrintError(
-				err,
-				map[string]string{"Error handling message": err.Error()},
-			)
-			continue
-		}
-	}
-}
-
-func (c *Client) pongHandler(pongMessage string) error {
-	return c.connection.SetReadDeadline(time.Now().Add(pongWait))
-}
-
-func (c *Client) writeMessages() {
-	defer func() {
-		c.manager.removeClient(c)
-	}()
 
 	ticker := time.NewTicker(pingInterval)
 
@@ -136,14 +93,7 @@ func (c *Client) writeMessages() {
 		// message sent
 		case <-ticker.C:
 			if err := c.connection.WriteMessage(websocket.PingMessage, []byte(``)); err != nil {
-				if errors.Is(err, websocket.ErrCloseSent) {
-					break
-				}
-				c.manager.app.logger.PrintError(
-					err,
-					map[string]string{"writing ping message error": err.Error()},
-				)
-				return
+				break
 			}
 		}
 	}

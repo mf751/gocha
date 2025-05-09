@@ -91,3 +91,12 @@ func (app *application) readJSON(
 	}
 	return nil
 }
+
+func removeFromSliceByValue[T comparable](s []T, val T) []T {
+	for i, v := range s {
+		if v == val {
+			return append(s[:i], s[i+1:]...)
+		}
+	}
+	return s // not found; return unchanged
+}

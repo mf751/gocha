@@ -33,8 +33,9 @@ type Chat struct {
 }
 
 type ChatUser struct {
-	User    User `json:"user"`
-	IsAdmin bool `json:"is_admin"`
+	ID      uuid.UUID `json:"id"`
+	Name    string    `json:"name"`
+	IsAdmin bool      `json:"is_admin"`
 }
 
 type ChatWithLastMessage struct {
@@ -135,13 +136,12 @@ WHERE users_chats.chat_id = $1
 	var chatUsers []*ChatUser
 
 	for rows.Next() {
-		var user User
-		var isAdmin bool
-		err = rows.Scan(&user.ID, &user.Name, &isAdmin)
+		var user ChatUser
+		err = rows.Scan(&user.ID, &user.Name, &user.IsAdmin)
 		if err != nil {
 			return nil, err
 		}
-		chatUsers = append(chatUsers, &ChatUser{User: user, IsAdmin: isAdmin})
+		chatUsers = append(chatUsers, &user)
 	}
 
 	err = rows.Err()
@@ -229,13 +229,14 @@ OFFSET $3
 		err = rows.Scan(
 			&message.ID,
 			&message.UserID,
-			&message.Content,
-			&message.Sent,
-			&message.Type,
+			&message.Content.NullString,
+			&message.Sent.Sent,
+			&message.Type.Int,
 		)
 		if err != nil {
 			return nil, err
 		}
+		message.ChatID = chatID
 		messages = append(messages, &message)
 	}
 

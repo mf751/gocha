@@ -55,6 +55,16 @@ func (app *application) routes() http.Handler {
 		"/v1/chats",
 		app.requireAuthentication(app.getUserChatsHandler),
 	)
+	router.HandlerFunc(
+		http.MethodPost,
+		"/v1/message",
+		app.requireAuthentication(app.sendMessageHandler),
+	)
+	router.HandlerFunc(
+		http.MethodGet,
+		"/v1/chat",
+		app.requireAuthentication(app.getChatMessagesHandler),
+	)
 	router.HandlerFunc(http.MethodGet, "/v1/ws", app.manager.serveWS)
 
 	return app.recoverPanic(app.enableCORS(app.rateLimit(app.authenticate(router))))

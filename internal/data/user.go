@@ -14,12 +14,12 @@ import (
 )
 
 type User struct {
-	ID        uuid.UUID    `json:"id"`
-	CreateAt  sql.NullTime `json:"created_at"`
-	Name      string       `json:"name"`
-	Email     string       `json:"email"`
-	Password  password     `json:"-"`
-	Activated bool         `json:"activated"`
+	ID        uuid.UUID `json:"id"`
+	CreateAt  Sent      `json:"created_at"`
+	Name      string    `json:"name"`
+	Email     string    `json:"email"`
+	Password  password  `json:"-"`
+	Activated bool      `json:"activated"`
 	// Version   int       `json:"-"`
 }
 
@@ -111,7 +111,7 @@ RETURNING id, created_at
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 
-	err := model.DB.QueryRowContext(ctx, sqlQuery, args...).Scan(&user.ID, &user.CreateAt)
+	err := model.DB.QueryRowContext(ctx, sqlQuery, args...).Scan(&user.ID, &user.CreateAt.Sent)
 	if err != nil {
 		switch {
 		case err.Error() == `pq: duplicate key value violates unique constraint "users_email_key"`:
@@ -135,7 +135,7 @@ WHERE email = $1
 
 	err := model.DB.QueryRowContext(ctx, sqlQuery, email).Scan(
 		&user.ID,
-		&user.CreateAt,
+		&user.CreateAt.Sent,
 		&user.Name,
 		&user.Email,
 		&user.Password.hash,
@@ -205,7 +205,7 @@ AND tokens.expiry > $3
 
 	err := model.DB.QueryRowContext(ctx, sqlQuery, args...).Scan(
 		&user.ID,
-		&user.CreateAt,
+		&user.CreateAt.Sent,
 		&user.Name,
 		&user.Email,
 		&user.Password.hash,
@@ -235,7 +235,7 @@ WHERE id = $1
 	}
 	err := model.DB.QueryRowContext(ctx, sqlQuery, ID).Scan(
 		&user.Name,
-		&user.CreateAt,
+		&user.CreateAt.Sent,
 		&user.Password.hash,
 		&user.Email,
 		&user.Activated,
@@ -285,10 +285,10 @@ ORDER BY messages.sent DESC NULLS LAST
 			&chatWithLastMessage.Chat.CreatedAt,
 			&chatWithLastMessage.Chat.IsPrivate,
 			&chatWithLastMessage.LastMessage.ID,
-			&chatWithLastMessage.LastMessage.Sent,
+			&chatWithLastMessage.LastMessage.Sent.Sent,
 			&chatWithLastMessage.LastMessage.UserID,
-			&chatWithLastMessage.LastMessage.Type,
-			&chatWithLastMessage.LastMessage.Content,
+			&chatWithLastMessage.LastMessage.Type.Int,
+			&chatWithLastMessage.LastMessage.Content.NullString,
 		)
 		if err != nil {
 			return nil, err

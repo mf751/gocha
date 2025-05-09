@@ -81,6 +81,63 @@ func (app *application) createChatHandler(w http.ResponseWriter, r *http.Request
 	if err != nil {
 		app.serverErrorResponse(w, r, err)
 	}
+	message := &data.Message{
+		UserID: requestUser.ID,
+		ChatID: chat.ID,
+		ID:     uuid.New(),
+		Content: data.Content{
+			NullString: sql.NullString{
+				Valid:  true,
+				String: requestUser.Name + " Created the chat.",
+			},
+		},
+		Type: data.Int32{
+			Int: sql.NullInt32{
+				Valid: true,
+				Int32: data.MessageJoined,
+			},
+		},
+	}
+	err = app.models.Messages.SendMessage(message)
+	if err != nil {
+		app.logger.PrintError(
+			err,
+			map[string]string{"error sending created chat message": err.Error()},
+		)
+		return
+	}
+
+	if client, ok := app.manager.connectionClients[requestUser.ID]; ok {
+		var broadMessage NewMessageEvent
+		broadMessage.Message = message.Content.NullString.String
+		broadMessage.From = message.UserID
+		broadMessage.ChatID = message.ChatID
+		broadMessage.Sent = message.Sent.Sent.Time
+
+		sendData, err := json.Marshal(broadMessage)
+		if err != nil {
+			app.logger.PrintError(
+				err,
+				map[string]string{"error marshaling created chat message": err.Error()},
+			)
+			return
+		}
+
+		outGoingEvent := Event{
+			Payload: sendData,
+			Type:    EventJoinedMessage,
+		}
+
+		app.manager.Lock()
+		app.manager.clients[message.ChatID] = make(map[uuid.UUID]*Client)
+		app.manager.clients[message.ChatID][message.UserID] = client
+		app.manager.clients[message.ChatID][message.UserID].chatsID = append(
+			app.manager.clients[message.ChatID][message.UserID].chatsID,
+			message.ChatID,
+		)
+		app.manager.Unlock()
+		client.egress <- outGoingEvent
+	}
 }
 
 func (app *application) deleteChatHandler(w http.ResponseWriter, r *http.Request) {
@@ -108,6 +165,17 @@ func (app *application) deleteChatHandler(w http.ResponseWriter, r *http.Request
 	if err != nil {
 		app.serverErrorResponse(w, r, err)
 	}
+	if _, ok := app.manager.clients[input.ChatId]; ok {
+		app.manager.Lock()
+		for userID := range app.manager.clients[input.ChatId] {
+			app.manager.connectionClients[userID].chatsID = removeFromSliceByValue(
+				app.manager.connectionClients[userID].chatsID,
+				input.ChatId,
+			)
+		}
+		delete(app.manager.clients, input.ChatId)
+		app.manager.Unlock()
+	}
 }
 
 func (app *application) getChatUsersHandler(w http.ResponseWriter, r *http.Request) {
@@ -115,7 +183,11 @@ func (app *application) getChatUsersHandler(w http.ResponseWriter, r *http.Reque
 		ChatId uuid.UUID `json:"chat_id"`
 	}
 
-	app.readJSON(w, r, &input)
+	err := app.readJSON(w, r, &input)
+	if err != nil {
+		app.badRequestResponse(w, r, err)
+		return
+	}
 	chatUsers, err := app.models.Chats.GetUsers(input.ChatId)
 	if err != nil {
 		switch {
@@ -171,13 +243,17 @@ func (app *application) joinChatHandler(w http.ResponseWriter, r *http.Request) 
 		UserID: user.ID,
 		ChatID: input.ChatId,
 		ID:     uuid.New(),
-		Content: sql.NullString{
-			Valid:  true,
-			String: user.Name + " Joined the chat.",
+		Content: data.Content{
+			NullString: sql.NullString{
+				Valid:  true,
+				String: user.Name + " Joined the chat.",
+			},
 		},
-		Type: sql.NullInt32{
-			Valid: true,
-			Int32: data.MessageJoined,
+		Type: data.Int32{
+			Int: sql.NullInt32{
+				Valid: true,
+				Int32: data.MessageJoined,
+			},
 		},
 	}
 	err = app.models.Messages.SendMessage(message)
@@ -190,10 +266,10 @@ func (app *application) joinChatHandler(w http.ResponseWriter, r *http.Request) 
 	}
 
 	var broadMessage NewMessageEvent
-	broadMessage.Message = message.Content.String
+	broadMessage.Message = message.Content.NullString.String
 	broadMessage.From = message.UserID
 	broadMessage.ChatID = message.ChatID
-	broadMessage.Sent = message.Sent.Time
+	broadMessage.Sent = message.Sent.Sent.Time
 
 	sendData, err := json.Marshal(broadMessage)
 	if err != nil {
@@ -209,15 +285,17 @@ func (app *application) joinChatHandler(w http.ResponseWriter, r *http.Request) 
 		Type:    EventJoinedMessage,
 	}
 
+	app.manager.Lock()
 	if _, ok := app.manager.clients[message.ChatID]; !ok {
 		app.manager.clients[message.ChatID] = make(map[uuid.UUID]*Client)
 	}
-	app.manager.Lock()
-	app.manager.clients[message.ChatID][message.UserID] = app.manager.connectionClients[message.UserID]
-	app.manager.clients[message.ChatID][message.UserID].chatsID = append(
-		app.manager.clients[message.ChatID][message.UserID].chatsID,
-		message.ChatID,
-	)
+	if _, ok := app.manager.connectionClients[message.UserID]; ok {
+		app.manager.clients[message.ChatID][message.UserID] = app.manager.connectionClients[message.UserID]
+		app.manager.clients[message.ChatID][message.UserID].chatsID = append(
+			app.manager.clients[message.ChatID][message.UserID].chatsID,
+			message.ChatID,
+		)
+	}
 	app.manager.Unlock()
 
 	for _, client := range app.manager.clients[message.ChatID] {
@@ -252,13 +330,17 @@ func (app *application) leaveChatHandler(w http.ResponseWriter, r *http.Request)
 		UserID: user.ID,
 		ChatID: input.ChatId,
 		ID:     uuid.New(),
-		Content: sql.NullString{
-			Valid:  true,
-			String: user.Name + " Left the chat.",
+		Content: data.Content{
+			NullString: sql.NullString{
+				Valid:  true,
+				String: user.Name + " Left the chat.",
+			},
 		},
-		Type: sql.NullInt32{
-			Valid: true,
-			Int32: data.MessageLeft,
+		Type: data.Int32{
+			Int: sql.NullInt32{
+				Valid: true,
+				Int32: data.MessageLeft,
+			},
 		},
 	}
 	err = app.models.Messages.SendMessage(message)
@@ -271,10 +353,10 @@ func (app *application) leaveChatHandler(w http.ResponseWriter, r *http.Request)
 	}
 
 	var broadMessage NewMessageEvent
-	broadMessage.Message = message.Content.String
+	broadMessage.Message = message.Content.NullString.String
 	broadMessage.From = message.UserID
 	broadMessage.ChatID = message.ChatID
-	broadMessage.Sent = message.Sent.Time
+	broadMessage.Sent = message.Sent.Sent.Time
 
 	sendData, err := json.Marshal(broadMessage)
 	if err != nil {
@@ -292,11 +374,47 @@ func (app *application) leaveChatHandler(w http.ResponseWriter, r *http.Request)
 
 	if _, ok := app.manager.clients[message.ChatID][message.UserID]; ok {
 		app.manager.Lock()
+		app.manager.connectionClients[message.UserID].chatsID = removeFromSliceByValue(
+			app.manager.connectionClients[message.UserID].chatsID,
+			message.ChatID,
+		)
 		delete(app.manager.clients[message.ChatID], user.ID)
 		app.manager.Unlock()
 	}
 
 	for _, client := range app.manager.clients[message.ChatID] {
 		client.egress <- outGoingEvent
+	}
+}
+
+func (app *application) getChatMessagesHandler(w http.ResponseWriter, r *http.Request) {
+	var input struct {
+		ChatId uuid.UUID `json:"chat_id"`
+		Size   int       `json:"size"`
+		Start  int       `json:"start"`
+	}
+
+	err := app.readJSON(w, r, &input)
+	if err != nil {
+		app.badRequestResponse(w, r, err)
+		return
+	}
+
+	vdtr := validator.New()
+	vdtr.Check(input.Size != 0, "size", "must be provided and more than 0")
+	if !vdtr.Valid() {
+		app.failedValidationResponse(w, r, vdtr.Errors)
+		return
+	}
+
+	messages, err := app.models.Chats.GetChatMessage(input.ChatId, input.Size, input.Start)
+	if err != nil {
+		app.serverErrorResponse(w, r, err)
+		return
+	}
+
+	err = app.writeJSON(w, http.StatusOK, envelope{"data": messages}, nil)
+	if err != nil {
+		app.serverErrorResponse(w, r, err)
 	}
 }

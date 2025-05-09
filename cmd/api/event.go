@@ -15,19 +15,14 @@ type Event struct {
 type EventHandler func(event Event, c *Client) error
 
 const (
-	EventSendMessage   string = "send_message"
 	EventNewMessage    string = "new_message"
 	EventJoinedMessage string = "joined_message"
 	EventLeftMessage   string = "left_message"
 )
 
-type SendMessageEvent struct {
+type NewMessageEvent struct {
 	Message string    `json:"message"`
 	ChatID  uuid.UUID `json:"chat_id"`
-}
-
-type NewMessageEvent struct {
-	SendMessageEvent
-	Sent time.Time `json:"sent"`
-	From uuid.UUID `json:"from"`
+	Sent    time.Time `json:"sent"`
+	From    uuid.UUID `json:"from"`
 }

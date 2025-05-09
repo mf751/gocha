@@ -182,7 +182,10 @@ func (app *application) joinChatHandler(w http.ResponseWriter, r *http.Request) 
 	}
 	err = app.models.Messages.SendMessage(message)
 	if err != nil {
-		app.serverErrorResponse(w, r, err)
+		app.logger.PrintError(
+			err,
+			map[string]string{"error sending joined chat message": err.Error()},
+		)
 		return
 	}
 
@@ -194,7 +197,11 @@ func (app *application) joinChatHandler(w http.ResponseWriter, r *http.Request) 
 
 	sendData, err := json.Marshal(broadMessage)
 	if err != nil {
-		app.serverErrorResponse(w, r, err)
+		app.logger.PrintError(
+			err,
+			map[string]string{"error marshaling joined chat message": err.Error()},
+		)
+		return
 	}
 
 	outGoingEvent := Event{
@@ -202,7 +209,18 @@ func (app *application) joinChatHandler(w http.ResponseWriter, r *http.Request) 
 		Type:    EventJoinedMessage,
 	}
 
-	for client := range app.manager.clients[message.ChatID] {
+	if _, ok := app.manager.clients[message.ChatID]; !ok {
+		app.manager.clients[message.ChatID] = make(map[uuid.UUID]*Client)
+	}
+	app.manager.Lock()
+	app.manager.clients[message.ChatID][message.UserID] = app.manager.connectionClients[message.UserID]
+	app.manager.clients[message.ChatID][message.UserID].chatsID = append(
+		app.manager.clients[message.ChatID][message.UserID].chatsID,
+		message.ChatID,
+	)
+	app.manager.Unlock()
+
+	for _, client := range app.manager.clients[message.ChatID] {
 		client.egress <- outGoingEvent
 	}
 }
@@ -228,5 +246,57 @@ func (app *application) leaveChatHandler(w http.ResponseWriter, r *http.Request)
 	err = app.writeJSON(w, http.StatusOK, envelope{"message": "ok"}, nil)
 	if err != nil {
 		app.serverErrorResponse(w, r, err)
+	}
+
+	message := &data.Message{
+		UserID: user.ID,
+		ChatID: input.ChatId,
+		ID:     uuid.New(),
+		Content: sql.NullString{
+			Valid:  true,
+			String: user.Name + " Left the chat.",
+		},
+		Type: sql.NullInt32{
+			Valid: true,
+			Int32: data.MessageLeft,
+		},
+	}
+	err = app.models.Messages.SendMessage(message)
+	if err != nil {
+		app.logger.PrintError(
+			err,
+			map[string]string{"error sending Left chat message": err.Error()},
+		)
+		return
+	}
+
+	var broadMessage NewMessageEvent
+	broadMessage.Message = message.Content.String
+	broadMessage.From = message.UserID
+	broadMessage.ChatID = message.ChatID
+	broadMessage.Sent = message.Sent.Time
+
+	sendData, err := json.Marshal(broadMessage)
+	if err != nil {
+		app.logger.PrintError(
+			err,
+			map[string]string{"error marshaling left chat message": err.Error()},
+		)
+		return
+	}
+
+	outGoingEvent := Event{
+		Payload: sendData,
+		Type:    EventLeftMessage,
+	}
+
+	if _, ok := app.manager.clients[message.ChatID][message.UserID]; ok {
+		app.manager.Lock()
+		delete(app.manager.clients[message.ChatID], user.ID)
+		app.manager.Unlock()
+	}
+
+	for _, client := range app.manager.clients[message.ChatID] {
+		client.egress <- outGoingEvent
 	}
 }

@@ -3,7 +3,8 @@ import { useEffect, useState } from "react";
 function App() {
   const [connected, setConnected] = useState(false);
   const [conn, setConn] = useState(null);
-  const authToken = "";
+  const authToken = "52V6HUN76UILQ3SUVJLMULWJO4";
+  const authToken2 = "SXXTGUZMNFRC45KFSXKZTGVC24";
   useEffect(() => {
     const conn = new WebSocket(`ws://localhost:5050/v1/ws?token=${authToken}`);
     conn.onopen = () => setConnected(true);

@@ -3,7 +3,6 @@ package main
 import (
 	"encoding/json"
 	"errors"
-	"fmt"
 	"time"
 
 	"github.com/google/uuid"
@@ -15,13 +14,13 @@ const (
 	pingInterval = (pongWait * 9) / 10
 )
 
-type ClientList map[uuid.UUID]map[*Client]bool
+type ClientList map[uuid.UUID]map[uuid.UUID]*Client
 
 type Client struct {
 	connection *websocket.Conn
 	manager    *Manager
-	userID     uuid.UUID
 	chatsID    []uuid.UUID
+	userID     uuid.UUID
 
 	egress chan Event
 }

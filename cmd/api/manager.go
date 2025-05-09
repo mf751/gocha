@@ -13,7 +13,8 @@ import (
 )
 
 type Manager struct {
-	clients ClientList
+	clients           ClientList
+	connectionClients map[uuid.UUID]*Client
 	sync.RWMutex
 
 	handlers map[string]EventHandler
@@ -80,7 +81,7 @@ func sendMessage(event Event, c *Client) error {
 		Type:    EventNewMessage,
 	}
 
-	for client := range c.manager.clients[chatEvent.ChatID] {
+	for _, client := range c.manager.clients[chatEvent.ChatID] {
 		client.egress <- outGoingEvent
 	}
 
@@ -93,9 +94,9 @@ func (m *Manager) addClient(client *Client) {
 
 	for _, chatID := range client.chatsID {
 		if _, ok := m.clients[chatID]; !ok {
-			m.clients[chatID] = make(map[*Client]bool)
+			m.clients[chatID] = make(map[uuid.UUID]*Client)
 		}
-		m.clients[chatID][client] = true
+		m.clients[chatID][client.userID] = client
 	}
 }
 
@@ -103,9 +104,10 @@ func (m *Manager) removeClient(client *Client) {
 	m.Lock()
 	defer m.Unlock()
 
+	client.connection.Close()
+	delete(m.connectionClients, client.userID)
 	for _, chatID := range client.chatsID {
-		client.connection.Close()
-		delete(m.clients[chatID], client)
+		delete(m.clients[chatID], client.userID)
 	}
 }
 

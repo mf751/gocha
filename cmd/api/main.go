@@ -32,9 +32,10 @@ type config struct {
 }
 
 type application struct {
-	config config
-	logger *jsonlog.Logger
-	models data.Modles
+	config  config
+	logger  *jsonlog.Logger
+	models  data.Modles
+	manager *Manager
 }
 
 func main() {
@@ -68,6 +69,7 @@ func main() {
 		models: data.NewModels(db),
 		logger: logger,
 	}
+	app.manager = newManager(app)
 
 	app.serve()
 }

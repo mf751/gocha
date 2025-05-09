@@ -3,6 +3,8 @@ package main
 import (
 	"encoding/json"
 	"time"
+
+	"github.com/google/uuid"
 )
 
 type Event struct {
@@ -18,11 +20,12 @@ const (
 )
 
 type SendMessageEvent struct {
-	Message string `json:"message"`
-	From    string `json:"from"`
+	Message string    `json:"message"`
+	ChatID  uuid.UUID `json:"chat_id"`
 }
 
 type NewMessageEvent struct {
 	SendMessageEvent
 	Sent time.Time `json:"sent"`
+	From uuid.UUID `json:"from"`
 }

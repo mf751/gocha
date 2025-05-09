@@ -2,11 +2,29 @@ import { useEffect, useState } from "react";
 
 function App() {
   const [connected, setConnected] = useState(false);
-  const conn = () => {
-    const conn = new WebSocket("http://localhost:5050/ws");
+  const [conn, setConn] = useState(null);
+  const authToken = "";
+  useEffect(() => {
+    const conn = new WebSocket(`ws://localhost:5050/v1/ws?token=${authToken}`);
     conn.onopen = () => setConnected(true);
-  };
-  return <h1 onClick={conn}>{connected ? "connected" : "disconnected"}</h1>;
+    conn.onclose = () => setConnected(false);
+    conn.onmessage = (event) => console.log(event);
+    setConn(conn);
+  }, []);
+  function sendEvent() {
+    conn.send(
+      JSON.stringify({
+        type: "send_message",
+        payload: { message: "test", chat_id: chatID },
+      }),
+    );
+  }
+  return (
+    <div>
+      <h1>{connected ? "connected" : "disconnected"}</h1>;
+      <button onClick={sendEvent}>Send</button>
+    </div>
+  );
 }
 
 export default App;

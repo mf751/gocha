@@ -293,6 +293,7 @@ ORDER BY messages.sent DESC NULLS LAST
 		if err != nil {
 			return nil, err
 		}
+		chatWithLastMessage.LastMessage.ChatID = chatWithLastMessage.Chat.ID
 		chatsWithLastMessage = append(chatsWithLastMessage, &chatWithLastMessage)
 	}
 
@@ -338,4 +339,34 @@ AND chat_id = $2
 	}
 
 	return err
+}
+
+func (model UserModel) GetChatsID(UserID uuid.UUID) ([]uuid.UUID, error) {
+	sqlQuery := `
+SELECT chat_id FROM users_chats
+WHERE user_id = $1
+	`
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	rows, err := model.DB.QueryContext(ctx, sqlQuery, UserID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var chatsID []uuid.UUID
+
+	for rows.Next() {
+		var chatID uuid.UUID
+		err = rows.Scan(&chatID)
+		if err != nil {
+			return nil, err
+		}
+		chatsID = append(chatsID, chatID)
+	}
+
+	err = rows.Err()
+
+	return chatsID, err
 }

@@ -25,6 +25,12 @@ type MessagesModel struct {
 	DB *sql.DB
 }
 
+const (
+	MessageJoined = int32(50)
+	MessageLeft   = int32(51)
+	MessageNormal = int32(1)
+)
+
 var ErrMessageDeletionFailed = errors.New("failed to delete message")
 
 func ValidateMessage(vdtr *validator.Validator, message *Message, userModel *UserModel) {

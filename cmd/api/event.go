@@ -9,14 +9,16 @@ import (
 
 type Event struct {
 	Type    string          `json:"type"`
-	Payload json.RawMessage `json:"paylaod"`
+	Payload json.RawMessage `json:"payload"`
 }
 
 type EventHandler func(event Event, c *Client) error
 
 const (
-	EventSendMessage string = "send_message"
-	EventNewMessage  string = "new_message"
+	EventSendMessage   string = "send_message"
+	EventNewMessage    string = "new_message"
+	EventJoinedMessage string = "joined_message"
+	EventLeftMessage   string = "left_message"
 )
 
 type SendMessageEvent struct {

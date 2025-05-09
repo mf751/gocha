@@ -1,6 +1,7 @@
 package main
 
 import (
+	"database/sql"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -37,17 +38,28 @@ func sendMessage(event Event, c *Client) error {
 	var chatEvent SendMessageEvent
 
 	if err := json.Unmarshal(event.Payload, &chatEvent); err != nil {
-		return fmt.Errorf("bad payload in the request %v", err)
+		return fmt.Errorf("bad payload in the request %v", err.Error())
+	}
+
+	err := c.manager.app.models.Users.IsInChat(c.userID, chatEvent.ChatID)
+	if err != nil {
+		return err
 	}
 
 	message := &data.Message{
 		ID:     uuid.New(),
 		UserID: c.userID,
-		ChatID: c.chatID,
+		ChatID: chatEvent.ChatID,
+		Content: sql.NullString{
+			Valid:  true,
+			String: chatEvent.Message,
+		},
+		Type: sql.NullInt32{
+			Valid: true,
+			Int32: data.MessageNormal,
+		},
 	}
-	message.Content.String = chatEvent.Message
-	message.Type.Int32 = 1
-	err := c.manager.app.models.Messages.SendMessage(message)
+	err = c.manager.app.models.Messages.SendMessage(message)
 	if err != nil {
 		return err
 	}
@@ -68,7 +80,7 @@ func sendMessage(event Event, c *Client) error {
 		Type:    EventNewMessage,
 	}
 
-	for client := range c.manager.clients[c.chatID] {
+	for client := range c.manager.clients[chatEvent.ChatID] {
 		client.egress <- outGoingEvent
 	}
 
@@ -79,17 +91,21 @@ func (m *Manager) addClient(client *Client) {
 	m.Lock()
 	defer m.Unlock()
 
-	m.clients[client.chatID] = make(map[*Client]bool)
-	m.clients[client.chatID][client] = true
+	for _, chatID := range client.chatsID {
+		if _, ok := m.clients[chatID]; !ok {
+			m.clients[chatID] = make(map[*Client]bool)
+		}
+		m.clients[chatID][client] = true
+	}
 }
 
 func (m *Manager) removeClient(client *Client) {
 	m.Lock()
 	defer m.Unlock()
 
-	if _, ok := m.clients[client.chatID][client]; ok {
+	for _, chatID := range client.chatsID {
 		client.connection.Close()
-		delete(m.clients[client.chatID], client)
+		delete(m.clients[chatID], client)
 	}
 }
 

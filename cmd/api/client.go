@@ -2,6 +2,8 @@ package main
 
 import (
 	"encoding/json"
+	"errors"
+	"fmt"
 	"time"
 
 	"github.com/google/uuid"
@@ -19,18 +21,23 @@ type Client struct {
 	connection *websocket.Conn
 	manager    *Manager
 	userID     uuid.UUID
-	chatID     uuid.UUID
+	chatsID    []uuid.UUID
 
 	egress chan Event
 }
 
-func newClient(conn *websocket.Conn, manager *Manager, userID, chatID uuid.UUID) *Client {
+func newClient(
+	conn *websocket.Conn,
+	manager *Manager,
+	userID uuid.UUID,
+	chatsID []uuid.UUID,
+) *Client {
 	return &Client{
 		connection: conn,
 		manager:    manager,
 		egress:     make(chan Event),
 		userID:     userID,
-		chatID:     chatID,
+		chatsID:    chatsID,
 	}
 }
 
@@ -109,7 +116,7 @@ func (c *Client) writeMessages() {
 						map[string]string{"connection closed": err.Error()},
 					)
 				}
-				return
+				break
 			}
 			data, err := json.Marshal(message)
 			if err != nil {
@@ -130,6 +137,9 @@ func (c *Client) writeMessages() {
 		// message sent
 		case <-ticker.C:
 			if err := c.connection.WriteMessage(websocket.PingMessage, []byte(``)); err != nil {
+				if errors.Is(err, websocket.ErrCloseSent) {
+					break
+				}
 				c.manager.app.logger.PrintError(
 					err,
 					map[string]string{"writing ping message error": err.Error()},

@@ -1,6 +1,8 @@
 package main
 
 import (
+	"database/sql"
+	"encoding/json"
 	"errors"
 	"net/http"
 
@@ -162,6 +164,46 @@ func (app *application) joinChatHandler(w http.ResponseWriter, r *http.Request) 
 	err = app.writeJSON(w, http.StatusOK, envelope{"message": "ok"}, nil)
 	if err != nil {
 		app.serverErrorResponse(w, r, err)
+		return
+	}
+
+	message := &data.Message{
+		UserID: user.ID,
+		ChatID: input.ChatId,
+		ID:     uuid.New(),
+		Content: sql.NullString{
+			Valid:  true,
+			String: user.Name + " Joined the chat.",
+		},
+		Type: sql.NullInt32{
+			Valid: true,
+			Int32: data.MessageJoined,
+		},
+	}
+	err = app.models.Messages.SendMessage(message)
+	if err != nil {
+		app.serverErrorResponse(w, r, err)
+		return
+	}
+
+	var broadMessage NewMessageEvent
+	broadMessage.Message = message.Content.String
+	broadMessage.From = message.UserID
+	broadMessage.ChatID = message.ChatID
+	broadMessage.Sent = message.Sent.Time
+
+	sendData, err := json.Marshal(broadMessage)
+	if err != nil {
+		app.serverErrorResponse(w, r, err)
+	}
+
+	outGoingEvent := Event{
+		Payload: sendData,
+		Type:    EventJoinedMessage,
+	}
+
+	for client := range app.manager.clients[message.ChatID] {
+		client.egress <- outGoingEvent
 	}
 }
 

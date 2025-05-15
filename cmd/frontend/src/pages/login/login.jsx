@@ -2,6 +2,7 @@ import { Link, useNavigate } from "react-router-dom";
 import "./styles.css";
 import { useState, useRef } from "react";
 import APIURL from "./../../api.js";
+import { SetAuthInfo } from "../../helpers/auth.js";
 
 export default function Login() {
   const [form, setForm] = useState({ email: "", password: "" });
@@ -32,12 +33,18 @@ export default function Login() {
             return;
           }
           setFailed({ type: key, msg: res["error"][key] });
-        } else if (res["authentication_token"] !== undefined) {
-          btnRef.current.style.backgroundColor = "#41dc83";
-          btnRef.current.disabled = true;
-          btnRef.current.textContent = "Logged in Succuessfully!";
-          setTimeout(() => navigate("/"), 1000);
+          return;
         }
+        if (res["authentication_token"] === undefined) {
+          setFailed({ type: "general", msg: "something went wrong" });
+          return;
+        }
+        setFailed("");
+        btnRef.current.style.backgroundColor = "#41dc83";
+        btnRef.current.disabled = true;
+        btnRef.current.textContent = "Logged in Succuessfully!";
+        SetAuthInfo(res);
+        setTimeout(() => navigate("/"), 1000);
       });
   }
   return (

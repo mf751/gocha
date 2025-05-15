@@ -37,6 +37,11 @@ func (app *application) routes() http.Handler {
 	)
 	router.HandlerFunc(
 		http.MethodGet,
+		"/v1/chats",
+		app.requireAuthentication(app.getUserChatsHandler),
+	)
+	router.HandlerFunc(
+		http.MethodGet,
 		"/v1/chat/users",
 		app.requireAuthentication(app.getChatUsersHandler),
 	)
@@ -51,11 +56,6 @@ func (app *application) routes() http.Handler {
 		app.requireAuthentication(app.leaveChatHandler),
 	)
 	router.HandlerFunc(
-		http.MethodGet,
-		"/v1/chats",
-		app.requireAuthentication(app.getUserChatsHandler),
-	)
-	router.HandlerFunc(
 		http.MethodPost,
 		"/v1/message",
 		app.requireAuthentication(app.sendMessageHandler),
@@ -64,6 +64,11 @@ func (app *application) routes() http.Handler {
 		http.MethodGet,
 		"/v1/chat",
 		app.requireAuthentication(app.getChatMessagesHandler),
+	)
+	router.HandlerFunc(
+		http.MethodGet,
+		"/v1/user",
+		app.requireAuthentication(app.getUserInfoHandler),
 	)
 	router.HandlerFunc(http.MethodGet, "/v1/ws", app.manager.serveWS)
 

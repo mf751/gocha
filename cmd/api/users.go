@@ -135,7 +135,12 @@ func (app *application) createAuthenticationTokenHandler(w http.ResponseWriter, 
 		return
 	}
 
-	err = app.writeJSON(w, http.StatusCreated, envelope{"authentication_token": token}, nil)
+	err = app.writeJSON(
+		w,
+		http.StatusCreated,
+		envelope{"authentication_token": token, "user": user},
+		nil,
+	)
 	if err != nil {
 		app.serverErrorResponse(w, r, err)
 	}
@@ -150,6 +155,14 @@ func (app *application) getUserChatsHandler(w http.ResponseWriter, r *http.Reque
 	}
 
 	err = app.writeJSON(w, http.StatusOK, envelope{"data": chats}, nil)
+	if err != nil {
+		app.serverErrorResponse(w, r, err)
+	}
+}
+
+func (app *application) getUserInfoHandler(w http.ResponseWriter, r *http.Request) {
+	user := app.contextGetUser(r)
+	err := app.writeJSON(w, http.StatusOK, envelope{"user": user}, nil)
 	if err != nil {
 		app.serverErrorResponse(w, r, err)
 	}

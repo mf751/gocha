@@ -1,13 +1,21 @@
+import { Link } from "react-router-dom";
 import "./styles.css";
 
-export default function Login() {
+export default function SignUp() {
   return (
     <div className="login">
       <div className="page-title">
-        <h1>Login</h1>
+        <h1>Sign Up</h1>
       </div>
       <form className="login-form">
         <div className="inputs">
+          <input
+            id="name"
+            type="text"
+            placeholder="name"
+            name="name"
+            required
+          />
           <input
             id="email"
             type="email"
@@ -24,9 +32,9 @@ export default function Login() {
           />
         </div>
 
-        <a className="signup" href="/signup">
-          Sign up?
-        </a>
+        <Link className="alter-link" to="/login">
+          Login?
+        </Link>
 
         <button>Login</button>
       </form>

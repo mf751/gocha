@@ -213,9 +213,13 @@ func (app *application) joinChatHandler(w http.ResponseWriter, r *http.Request) 
 		ChatId uuid.UUID `json:"chat_id"`
 	}
 
-	app.readJSON(w, r, &input)
+	err := app.readJSON(w, r, &input)
+	if err != nil {
+		app.serverErrorResponse(w, r, err)
+		return
+	}
 	user := app.contextGetUser(r)
-	err := app.models.Chats.Join(input.ChatId, user.ID, false)
+	err = app.models.Chats.Join(input.ChatId, user.ID, false)
 	if err != nil {
 		switch {
 		case errors.Is(err, data.ErrChatNotFound):

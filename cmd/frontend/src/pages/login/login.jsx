@@ -3,12 +3,14 @@ import "./styles.css";
 import { useState, useRef } from "react";
 import APIURL from "./../../api.js";
 import { SetAuthInfo } from "../../helpers/auth.js";
+import { useDispatch } from "react-redux";
 
 export default function Login() {
   const [form, setForm] = useState({ email: "", password: "" });
   const [failed, setFailed] = useState({});
   const btnRef = useRef();
   const navigate = useNavigate();
+  const dispatch = useDispatch();
 
   function login(event) {
     const email = event.get("email");
@@ -43,8 +45,8 @@ export default function Login() {
         btnRef.current.style.backgroundColor = "#41dc83";
         btnRef.current.disabled = true;
         btnRef.current.textContent = "Logged in Succuessfully!";
-        SetAuthInfo(res);
-        setTimeout(() => navigate("/"), 1000);
+        SetAuthInfo(res, dispatch);
+        setTimeout(() => navigate("/profile"), 1000);
       });
   }
   return (

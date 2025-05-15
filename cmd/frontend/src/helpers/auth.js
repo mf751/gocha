@@ -2,16 +2,14 @@ import { useDispatch } from "react-redux";
 import APIURL from "../api";
 import { setLoggedIn, setUser } from "../store/slices/user";
 
-export function SetAuthInfo(obj) {
-  const dispatch = useDispatch();
+export function SetAuthInfo(obj, dispatch) {
   dispatch(setUser(obj.user));
   dispatch(setLoggedIn(true));
-  localStorage.setItem("authToken", obj.token);
-  localStorage.setItem("expiry", obj.expiry);
+  localStorage.setItem("authToken", obj["authentication_token"].token);
+  localStorage.setItem("expiry", obj["authentication_token"].expiry);
 }
 
-function setUserInfo() {
-  const dispatch = useDispatch();
+function setUserInfo(dispatch) {
   fetch(`${APIURL}/v1/user`, {
     method: "GET",
     headers: {

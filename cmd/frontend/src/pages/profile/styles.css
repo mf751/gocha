@@ -31,6 +31,8 @@
 }
 
 .profile .info .card.id {
+  display: flex;
+  align-items: center;
   font-size: 12px;
   line-height: 0.9;
 }

@@ -54,8 +54,12 @@ INSERT INTO chats(id, name, owner_id, is_private)
 VALUES( $1, $2, $3, $4)
 RETURNING created_at
 	`
-	ctx, canacel := context.WithTimeout(context.Background(), 3*time.Second)
-	defer canacel()
+	sqlQuery2 := `
+INSERT INTO users_chats(user_id, chat_id, is_admin)
+VALUES($1, $2, true)
+	`
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
 
 	args := []interface{}{chat.ID, chat.Name, chat.OwnerID, chat.IsPrivate}
 	err := model.DB.QueryRowContext(ctx, sqlQuery, args...).Scan(&chat.CreatedAt)
@@ -66,6 +70,11 @@ RETURNING created_at
 		default:
 			return time.Time{}, err
 		}
+	}
+	if chat.IsPrivate {
+		ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+		defer cancel()
+		model.DB.QueryRowContext(ctx, sqlQuery2, chat.OwnerID, chat.ID)
 	}
 	return chat.CreatedAt, nil
 }

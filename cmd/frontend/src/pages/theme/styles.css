@@ -1,0 +1,14 @@
+.theme {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+}
+
+.theme-icon {
+  width: 30px;
+  height: 30px;
+}
+
+.theme-icon.dark {
+  color: white;
+}

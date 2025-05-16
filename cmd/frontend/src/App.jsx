@@ -9,6 +9,7 @@ import { useDispatch, useSelector } from "react-redux";
 import APIURL from "./api.js";
 import { setLoggedIn, setUser } from "./store/slices/user.js";
 import { useEffect, useState } from "react";
+import Nav from "./pages/nav/index.jsx";
 
 function App() {
   const location = useLocation();
@@ -34,7 +35,6 @@ function App() {
           navigate(window.location.pathname, { replace: true });
           setLoading(false);
         } catch (error) {
-          console.log(error);
           setLoading(false);
           navigate("/login", { replace: true });
         }
@@ -54,6 +54,7 @@ function App() {
           path="/"
           element={
             <RequireAuth>
+              <Nav />
               <Home />
             </RequireAuth>
           }
@@ -62,6 +63,7 @@ function App() {
           path="/profile"
           element={
             <RequireAuth>
+              <Nav />
               <Profile />
             </RequireAuth>
           }

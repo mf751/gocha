@@ -1,0 +1,17 @@
+nav {
+  position: absolute;
+  bottom: 0px;
+  display: flex;
+  gap: 25px;
+}
+
+nav a {
+  text-decoration: none;
+  cursor: pointer;
+  color: var(--main-color);
+}
+
+nav .icon {
+  width: 30px;
+  height: 30px;
+}

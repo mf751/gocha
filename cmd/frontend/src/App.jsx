@@ -20,8 +20,11 @@ function App() {
 
   useEffect(() => {
     const expiry = localStorage.getItem("expiry");
-    if (expiry === null || new Date(expiry) < new Date())
+    if (expiry === null || new Date(expiry) < new Date()) {
+      localStorage.setItem("expiry", "");
+      localStorage.setItem("authToken", "");
       navigate("/login", { replace: true });
+    }
     if (!loggedIn) {
       const token = localStorage.getItem("authToken");
       (async () => {
@@ -30,6 +33,11 @@ function App() {
             headers: { Authorization: `Bearer ${token}` },
           });
           const data = await res.json();
+          if (res.status !== 200) {
+            navigate("/login", { replace: true });
+            setLoading(false);
+          }
+
           dispatch(setUser(data.user));
           dispatch(setLoggedIn(true));
           navigate(window.location.pathname, { replace: true });
@@ -40,7 +48,7 @@ function App() {
         }
       })();
     }
-  }, [location, dispatch, loggedIn]);
+  }, [location]);
   if (loading) {
     return <h1>Loading</h1>;
   }

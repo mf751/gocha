@@ -2,16 +2,21 @@ nav {
   position: absolute;
   bottom: 0px;
   display: flex;
-  gap: 25px;
+  /* gap: 25px; */
+  width: 252px;
+  justify-content: space-evenly;
 }
 
 nav a {
+  user-select: none;
   text-decoration: none;
+  -webkit-tap-highlight-color: transparent;
   cursor: pointer;
   color: var(--main-color);
 }
 
 nav .icon {
+  user-select: none;
   width: 30px;
   height: 30px;
 }

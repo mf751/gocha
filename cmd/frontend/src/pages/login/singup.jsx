@@ -13,7 +13,6 @@ export default function Signup() {
   const dispatch = useDispatch();
 
   function signup(event) {
-    console.log(event);
     const name = event.get("name");
     const email = event.get("email");
     const password = event.get("password");
@@ -113,6 +112,9 @@ export default function Signup() {
 
         <Link className="alter-link" to="/login">
           Login?
+        </Link>
+        <Link className="alter-link" to="/">
+          Home?
         </Link>
 
         <button ref={btnRef}>Sign Up</button>

@@ -4,14 +4,14 @@ import Signup from "./pages/login/singup.jsx";
 import Home from "./pages/home/index.jsx";
 import Theme from "./pages/theme/index.jsx";
 import Profile from "./pages/profile/index.jsx";
+import Chat from "./pages/chat/index.jsx";
 import RequireAuth from "./helpers/middleware.jsx";
 import { useDispatch, useSelector } from "react-redux";
 import APIURL from "./api.js";
 import { setLoggedIn, setUser } from "./store/slices/user.js";
-import { setChats } from "./store/slices/chats.js";
+import { setChats, setLoaded } from "./store/slices/chats.js";
 import { useEffect, useState } from "react";
 import Nav from "./pages/nav/index.jsx";
-import { use } from "react";
 import { useRef } from "react";
 
 function App() {
@@ -31,8 +31,9 @@ function App() {
       localStorage.setItem("expiry", "");
       localStorage.setItem("authToken", "");
       navigate("/login", { replace: true });
+      setLoading(false);
     }
-    if (!loggedIn) {
+    if (!loggedIn && localStorage.getItem("expiry") !== "") {
       const token = localStorage.getItem("authToken");
       (async () => {
         try {
@@ -69,6 +70,7 @@ function App() {
           });
           const data = await res.json();
           dispatch(setChats(data.data));
+          dispatch(setLoaded(true));
           // only initiate the ws and the next useEffect will set the onmessage on every chats change
           wsRef.current = new WebSocket(`${APIURL}/v1/ws?token=${token}`);
           return () => wsRef.current.close();
@@ -142,6 +144,14 @@ function App() {
             <RequireAuth>
               <Nav />
               <Profile />
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="/chat/:chatID"
+          element={
+            <RequireAuth>
+              <Chat />
             </RequireAuth>
           }
         />

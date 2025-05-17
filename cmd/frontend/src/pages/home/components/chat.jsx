@@ -1,8 +1,10 @@
 import { IoChatbubbles, IoPersonCircle } from "react-icons/io5";
+import { useNavigate } from "react-router-dom";
 
 export default function Chat({ chat, lastMessage }) {
+  const navigate = useNavigate();
   return (
-    <div className="chat">
+    <div className="chat" onClick={() => navigate(`/chat/${chat.id}`)}>
       <div className="logo">
         {chat.is_private ? (
           <IoPersonCircle className="icon" />

@@ -1,0 +1,49 @@
+.error {
+  align-self: center;
+  display: flex;
+  justify-content: center;
+  flex-direction: column;
+}
+
+.error h3 {
+  margin: 0;
+}
+
+.error a {
+  color: var(--main-color);
+  font-weight: bolder;
+}
+
+.in-chat {
+  align-self: flex-start;
+  display: flex;
+  width: 450px;
+  /* padding: 0 20px; */
+  flex-direction: column;
+}
+
+.in-chat .header {
+  padding: 0 20px;
+  display: flex;
+  align-items: center;
+  border-bottom: 1px solid var(--main-color);
+  height: 4rem;
+}
+
+.in-chat .header .icon {
+  width: 30px;
+  height: 30px;
+  margin-right: 1rem;
+}
+
+.in-chat .header h1 {
+  margin: 0 10px 0 0;
+  width: fit-content;
+  flex-basis: 20%;
+}
+
+.in-chat .messages {
+  background-color: red;
+  width: 100%;
+  flex-basis: 80%;
+}

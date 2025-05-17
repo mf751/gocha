@@ -21,9 +21,14 @@
 .chats .list .chat {
   padding: 0 20px;
   display: flex;
-  margin-bottom: 8px;
+  padding-bottom: 8px;
   gap: 10px;
   border-bottom: 1px solid var(--main-color);
+}
+
+.chats .list .chat:active,
+.chats .list .chat:hover {
+  background-color: var(--login-field-bg);
 }
 
 .chats .list .chat .logo {
@@ -46,6 +51,7 @@
 
 .chats .list .chat .info h3 {
   margin: 0;
+  height: 1.3rem;
 }
 
 .chats .list .chat .info p {

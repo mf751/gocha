@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"net/http"
+	"strconv"
 
 	"github.com/google/uuid"
 
@@ -184,23 +185,31 @@ func (app *application) deleteChatHandler(w http.ResponseWriter, r *http.Request
 }
 
 func (app *application) getChatUsersHandler(w http.ResponseWriter, r *http.Request) {
-	var input struct {
-		ChatId uuid.UUID `json:"chat_id"`
-	}
-
-	err := app.readJSON(w, r, &input)
-	if err != nil {
-		app.badRequestResponse(w, r, err)
+	chatIDString := r.URL.Query().Get("id")
+	chatID, err := uuid.Parse(chatIDString)
+	if err != nil || chatIDString == "" {
+		app.errorResponse(w, r, http.StatusUnprocessableEntity, "Bad UUID")
 		return
 	}
-	chatUsers, err := app.models.Chats.GetUsers(input.ChatId)
+
+	chatUsers, err := app.models.Chats.GetUsers(chatID)
 	if err != nil {
 		switch {
 		case errors.Is(err, data.ErrChatNotFound):
-			app.errorResponse(w, r, http.StatusUnprocessableEntity, "Chat not found")
+			app.errorResponse(
+				w,
+				r,
+				http.StatusUnprocessableEntity,
+				"Chat not found",
+			)
 			return
 		case errors.Is(err, data.ErrPrivateChat):
-			app.errorResponse(w, r, http.StatusUnprocessableEntity, "Private chat")
+			app.errorResponse(
+				w,
+				r,
+				http.StatusUnprocessableEntity,
+				"Private chat",
+			)
 			return
 		default:
 			app.serverErrorResponse(w, r, err)
@@ -228,10 +237,20 @@ func (app *application) joinChatHandler(w http.ResponseWriter, r *http.Request) 
 	if err != nil {
 		switch {
 		case errors.Is(err, data.ErrChatNotFound):
-			app.errorResponse(w, r, http.StatusUnprocessableEntity, "Chat not found")
+			app.errorResponse(
+				w,
+				r,
+				http.StatusUnprocessableEntity,
+				"Chat not found",
+			)
 			return
 		case errors.Is(err, data.ErrPrivateChat):
-			app.errorResponse(w, r, http.StatusUnprocessableEntity, "Private chat")
+			app.errorResponse(
+				w,
+				r,
+				http.StatusUnprocessableEntity,
+				"Private chat",
+			)
 			return
 		case errors.Is(err, data.ErrAlreadyMember):
 			app.errorResponse(w, r, http.StatusUnprocessableEntity, err.Error())
@@ -399,26 +418,58 @@ func (app *application) leaveChatHandler(w http.ResponseWriter, r *http.Request)
 }
 
 func (app *application) getChatMessagesHandler(w http.ResponseWriter, r *http.Request) {
-	var input struct {
-		ChatId uuid.UUID `json:"chat_id"`
-		Size   int       `json:"size"`
-		Start  int       `json:"start"`
+	params := r.URL.Query()
+	chatIDStirng := params.Get("id")
+	sizeString := params.Get("size")
+	startString := params.Get("start")
+	if sizeString == "" || chatIDStirng == "" || startString == "" {
+		app.errorResponse(
+			w,
+			r,
+			http.StatusUnprocessableEntity,
+			"all parameters must be provided",
+		)
+		return
+	}
+	size, err1 := strconv.ParseInt(sizeString, 10, 32)
+	start, err2 := strconv.ParseInt(startString, 10, 32)
+
+	if err1 != nil || err2 != nil {
+		app.errorResponse(
+			w,
+			r,
+			http.StatusUnprocessableEntity,
+			"invalid start/size values",
+		)
 	}
 
-	err := app.readJSON(w, r, &input)
+	chatID, err := uuid.Parse(chatIDStirng)
 	if err != nil {
 		app.badRequestResponse(w, r, err)
 		return
 	}
 
 	vdtr := validator.New()
-	vdtr.Check(input.Size != 0, "size", "must be provided and more than 0")
+	vdtr.Check(size != 0, "size", "must be provided and more than 0")
 	if !vdtr.Valid() {
 		app.failedValidationResponse(w, r, vdtr.Errors)
 		return
 	}
 
-	messages, err := app.models.Chats.GetChatMessage(input.ChatId, input.Size, input.Start)
+	user := app.contextGetUser(r)
+	err = app.models.Users.IsInChat(user.ID, chatID)
+	if err != nil {
+		switch {
+		case errors.Is(err, data.ErrNotInChat):
+			app.errorResponse(w, r, http.StatusUnauthorized, err.Error())
+			return
+		default:
+			app.serverErrorResponse(w, r, err)
+			return
+		}
+	}
+
+	messages, err := app.models.Chats.GetChatMessage(chatID, int(size), int(start))
 	if err != nil {
 		app.serverErrorResponse(w, r, err)
 		return

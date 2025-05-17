@@ -4,7 +4,7 @@ const chatsSlice = createSlice({
   name: "chats",
   initialState: { chats: [] },
   reducers: {
-    setChats(state, action) {
+    setChats(state = initialState, action) {
       state.chats = action.payload;
     },
   },

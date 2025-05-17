@@ -11,16 +11,20 @@ import { setLoggedIn, setUser } from "./store/slices/user.js";
 import { setChats } from "./store/slices/chats.js";
 import { useEffect, useState } from "react";
 import Nav from "./pages/nav/index.jsx";
+import { use } from "react";
+import { useRef } from "react";
 
 function App() {
   const location = useLocation();
   const dispatch = useDispatch();
   const loggedIn = useSelector((state) => state.user.loggedIn);
-  let user = useSelector((state) => state.user.user);
-  if (user === undefined) user = {};
+  const user = useSelector((state) => state.user.user);
+  const chats = useSelector((state) => state.chats.chats);
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
+  const wsRef = useRef(null);
 
+  // runs on every reroute
   useEffect(() => {
     const expiry = localStorage.getItem("expiry");
     if (expiry === null || new Date(expiry) < new Date()) {
@@ -52,6 +56,7 @@ function App() {
     }
   }, [location]);
 
+  // Only runs once per user
   useEffect(() => {
     if (Object.keys(user).length !== 0) {
       (async () => {
@@ -64,15 +69,43 @@ function App() {
           });
           const data = await res.json();
           dispatch(setChats(data.data));
-          const ws = new WebSocket(`${APIURL}/v1/ws?token=${token}`);
-          ws.onopen = () => console.log("opened");
-          ws.onmessage = (evt) => console.log(evt);
+          // only initiate the ws and the next useEffect will set the onmessage on every chats change
+          wsRef.current = new WebSocket(`${APIURL}/v1/ws?token=${token}`);
+          return () => wsRef.current.close();
         } catch (error) {
           console.log(error);
         }
       })();
     }
   }, [user]);
+
+  // runs on every chats value change so that it resets the onmessage function correctly!
+  useEffect(() => {
+    if (!wsRef.current) return;
+    wsRef.current.onmessage = (evt) => {
+      const wsData = JSON.parse(evt.data);
+      const newChats = chats.map((obj) => {
+        if (obj.chat.id != wsData.payload.chat_id) return obj;
+        return {
+          chat: obj.chat,
+          last_message: {
+            chat_id: wsData.payload.chat_id,
+            content: wsData.payload.message,
+            id: wsData.payload.id,
+            user_id: wsData.payload.from,
+            sent: wsData.payload.sent,
+            type:
+              wsData.type === "new_message"
+                ? 1
+                : wsData.type === "joined_message"
+                  ? 50
+                  : 51,
+          },
+        };
+      });
+      dispatch(setChats(newChats));
+    };
+  }, [chats]);
 
   if (loading) {
     return (

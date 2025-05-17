@@ -8,7 +8,7 @@
 
 .profile h1 {
   margin: 0;
-  width: 100%;
+  width: 80%;
   text-align: center;
   border-bottom: 1px solid var(--main-color);
 }

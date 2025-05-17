@@ -8,6 +8,7 @@ import RequireAuth from "./helpers/middleware.jsx";
 import { useDispatch, useSelector } from "react-redux";
 import APIURL from "./api.js";
 import { setLoggedIn, setUser } from "./store/slices/user.js";
+import { setChats } from "./store/slices/chats.js";
 import { useEffect, useState } from "react";
 import Nav from "./pages/nav/index.jsx";
 
@@ -15,6 +16,8 @@ function App() {
   const location = useLocation();
   const dispatch = useDispatch();
   const loggedIn = useSelector((state) => state.user.loggedIn);
+  let user = useSelector((state) => state.user.user);
+  if (user === undefined) user = {};
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
 
@@ -44,13 +47,46 @@ function App() {
           setLoading(false);
         } catch (error) {
           setLoading(false);
-          navigate("/login", { replace: true });
         }
       })();
     }
   }, [location]);
+
+  useEffect(() => {
+    if (Object.keys(user).length !== 0) {
+      (async () => {
+        try {
+          const token = localStorage.getItem("authToken");
+          const res = await fetch(`${APIURL}/v1/chats`, {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          });
+          const data = await res.json();
+          dispatch(setChats(data.data));
+          const ws = new WebSocket(`${APIURL}/v1/ws?token=${token}`);
+          ws.onopen = () => console.log("opened");
+          ws.onmessage = (evt) => console.log(evt);
+        } catch (error) {
+          console.log(error);
+        }
+      })();
+    }
+  }, [user]);
+
   if (loading) {
-    return <h1>Loading</h1>;
+    return (
+      <div
+        style={{
+          height: "100dvh",
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+        }}
+      >
+        <h1>Loading</h1>
+      </div>
+    );
   }
   return (
     <div className="parent">

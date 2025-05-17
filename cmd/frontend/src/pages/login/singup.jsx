@@ -56,7 +56,7 @@ export default function Signup() {
           .then((res) => res.json())
           .then((res) => {
             SetAuthInfo(res, dispatch);
-            navigate("/profile");
+            navigate("/");
           });
       });
   }
@@ -112,9 +112,6 @@ export default function Signup() {
 
         <Link className="alter-link" to="/login">
           Login?
-        </Link>
-        <Link className="alter-link" to="/">
-          Home?
         </Link>
 
         <button ref={btnRef}>Sign Up</button>

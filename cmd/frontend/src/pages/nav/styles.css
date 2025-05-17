@@ -1,10 +1,14 @@
 nav {
-  position: absolute;
+  position: fixed;
   bottom: 0px;
   display: flex;
   /* gap: 25px; */
-  width: 252px;
+  max-width: 450px;
+  width: 100dvw;
   justify-content: space-evenly;
+  background-color: var(--main-bg);
+  z-index: 5094;
+  padding-top: 6px;
 }
 
 nav a {

@@ -46,7 +46,7 @@ export default function Login() {
         btnRef.current.disabled = true;
         btnRef.current.textContent = "Logged in Succuessfully!";
         SetAuthInfo(res, dispatch);
-        setTimeout(() => navigate("/profile"), 1000);
+        setTimeout(() => navigate("/"), 1000);
       });
   }
   return (

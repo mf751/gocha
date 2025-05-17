@@ -41,6 +41,7 @@ type ChatUser struct {
 type ChatWithLastMessage struct {
 	Chat        Chat    `json:"chat"`
 	LastMessage Message `json:"last_message"`
+	Members     int     `json:"members"`
 }
 
 func ValidateChatName(vdtr *validator.Validator, name string) {

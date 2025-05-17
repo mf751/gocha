@@ -253,8 +253,14 @@ WHERE id = $1
 
 func (model UserModel) GetChats(UserID uuid.UUID) ([]*ChatWithLastMessage, error) {
 	sqlQuery := `
-SELECT chats.id, chats.name, chats.owner_id, chats.created_at, chats.is_private, messages.id, messages.sent, messages.user_id, messages.type, messages.content FROM users_chats
+WITH member_counts AS (
+  SELECT chat_id, COUNT(*) AS member_count
+  FROM users_chats
+  GROUP BY chat_id
+)
+SELECT mc.member_count, chats.id, chats.name, chats.owner_id, chats.created_at, chats.is_private, messages.id, messages.sent, messages.user_id, messages.type, messages.content FROM users_chats
 JOIN chats ON chats.id = users_chats.chat_id
+JOIN member_counts mc ON mc.chat_id = chats.id
 LEFT JOIN LATERAL(
 	SELECT * FROM messages
 	WHERE messages.chat_id = chats.id
@@ -279,6 +285,7 @@ ORDER BY messages.sent DESC NULLS LAST
 	for rows.Next() {
 		var chatWithLastMessage ChatWithLastMessage
 		err = rows.Scan(
+			&chatWithLastMessage.Members,
 			&chatWithLastMessage.Chat.ID,
 			&chatWithLastMessage.Chat.Name,
 			&chatWithLastMessage.Chat.OwnerID,

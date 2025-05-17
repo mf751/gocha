@@ -25,4 +25,5 @@ type NewMessageEvent struct {
 	ChatID  uuid.UUID `json:"chat_id"`
 	Sent    time.Time `json:"sent"`
 	From    uuid.UUID `json:"from"`
+	ID      uuid.UUID `json:"id"`
 }

@@ -75,7 +75,11 @@ func (app *application) createChatHandler(w http.ResponseWriter, r *http.Request
 		}
 	}
 
-	app.models.Chats.Join(chat.ID, requestUser.ID, true)
+	err = app.models.Chats.Join(chat.ID, requestUser.ID, true)
+	if err != nil {
+		app.serverErrorResponse(w, r, err)
+		return
+	}
 
 	err = app.writeJSON(w, http.StatusOK, envelope{"chat": chat}, nil)
 	if err != nil {
@@ -113,6 +117,7 @@ func (app *application) createChatHandler(w http.ResponseWriter, r *http.Request
 		broadMessage.From = message.UserID
 		broadMessage.ChatID = message.ChatID
 		broadMessage.Sent = message.Sent.Sent.Time
+		broadMessage.ID = message.ID
 
 		sendData, err := json.Marshal(broadMessage)
 		if err != nil {
@@ -274,6 +279,7 @@ func (app *application) joinChatHandler(w http.ResponseWriter, r *http.Request) 
 	broadMessage.From = message.UserID
 	broadMessage.ChatID = message.ChatID
 	broadMessage.Sent = message.Sent.Sent.Time
+	broadMessage.ID = message.ID
 
 	sendData, err := json.Marshal(broadMessage)
 	if err != nil {
@@ -361,6 +367,7 @@ func (app *application) leaveChatHandler(w http.ResponseWriter, r *http.Request)
 	broadMessage.From = message.UserID
 	broadMessage.ChatID = message.ChatID
 	broadMessage.Sent = message.Sent.Sent.Time
+	broadMessage.ID = message.ID
 
 	sendData, err := json.Marshal(broadMessage)
 	if err != nil {

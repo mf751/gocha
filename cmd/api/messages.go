@@ -81,6 +81,7 @@ func (app *application) sendMessageHandler(w http.ResponseWriter, r *http.Reques
 	broadCastMessage.From = message.UserID
 	broadCastMessage.Sent = message.Sent.Sent.Time
 	broadCastMessage.Message = message.Content.NullString.String
+	broadCastMessage.ID = message.ID
 
 	sendData, err := json.Marshal(broadCastMessage)
 	if err != nil {

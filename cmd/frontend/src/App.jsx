@@ -90,6 +90,7 @@ function App() {
         if (obj.chat.id != wsData.payload.chat_id) return obj;
         return {
           chat: obj.chat,
+          members: obj.members,
           last_message: {
             chat_id: wsData.payload.chat_id,
             content: wsData.payload.message,
@@ -125,14 +126,30 @@ function App() {
   }
   return (
     <div className="parent">
-      <Theme />
       <Routes>
-        <Route path="/login" element={<Login />} />
-        <Route path="/signup" element={<Signup />} />
+        <Route
+          path="/login"
+          element={
+            <>
+              <Theme />
+              <Login />
+            </>
+          }
+        />
+        <Route
+          path="/signup"
+          element={
+            <>
+              <Theme />
+              <Signup />
+            </>
+          }
+        />
         <Route
           path="/"
           element={
             <RequireAuth>
+              <Theme />
               <Nav />
               <Home />
             </RequireAuth>
@@ -142,6 +159,7 @@ function App() {
           path="/profile"
           element={
             <RequireAuth>
+              <Theme />
               <Nav />
               <Profile />
             </RequireAuth>

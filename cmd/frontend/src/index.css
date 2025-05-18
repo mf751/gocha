@@ -23,7 +23,7 @@
 }
 
 :root[data-theme="light"] {
-  --main-color: var(-l-main-color);
+  --main-color: var(--l-main-color);
   --main-bg: var(--l-main-bg);
   --login-field-bg: var(--l-login-field-bg);
   --login-filed-color: var(--l-login-field-color);

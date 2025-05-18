@@ -6,6 +6,16 @@ import { useSelector } from "react-redux";
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { TiArrowLeftThick } from "react-icons/ti";
+import {
+  IoInformationCircleOutline,
+  IoInformationCircleSharp,
+  IoPersonAddOutline,
+  IoPersonAddSharp,
+  IoSend,
+} from "react-icons/io5";
+import { FiPlusCircle } from "react-icons/fi";
+import Message from "./components/message";
+import { useRef } from "react";
 
 export default function Chat() {
   const { chatID } = useParams();
@@ -15,6 +25,11 @@ export default function Chat() {
   const chatsLoaded = useSelector((state) => state.chats.loaded);
   const thisChat = chats.filter((obj) => obj.chat.id === chatID)[0];
   const navigate = useNavigate();
+  const [infoShown, setInfoShowen] = useState(false);
+  const [userAddShown, setUserAddShown] = useState(false);
+  const typingRef = useRef(null);
+  const msgRef = useRef(null);
+  const user = useSelector((state) => state.user.user);
 
   if (chatsLoaded && chats.length === 0) navigate("/", { replace: true });
 
@@ -23,7 +38,14 @@ export default function Chat() {
     if (thisChat.last_message.id !== messages[0].id) {
       setMessages((prev) => [thisChat.last_message, ...prev]);
     }
-  }, [chats, messages]);
+  }, [chats]);
+
+  useEffect(() => {
+    if (msgRef.current != null) {
+      msgRef.current.scrollTop = msgRef.current.scrollHeight;
+    }
+  }, [messages, chats]);
+
   useEffect(() => {
     (async () => {
       try {
@@ -75,14 +97,51 @@ export default function Chat() {
   return (
     <div className="in-chat">
       <div className="header">
-        <TiArrowLeftThick
-          className="icon"
-          onClick={() => navigate("/", { replace: true })}
-        />
-        <h1>{thisChat.chat.name} </h1>
-        <h2>({thisChat.members})</h2>
+        <div className="first-group">
+          <TiArrowLeftThick
+            className="icon"
+            onClick={() => navigate("/", { replace: true })}
+          />
+          <div className="title">
+            <h1>{thisChat.chat.name} </h1>
+            <h2>({thisChat.members})</h2>
+          </div>
+        </div>
+        <div className="options">
+          {userAddShown ? (
+            <IoPersonAddSharp
+              className="add-icon"
+              onClick={() => setUserAddShown((prev) => !prev)}
+            />
+          ) : (
+            <IoPersonAddOutline
+              className="add-icon"
+              onClick={() => setUserAddShown((prev) => !prev)}
+            />
+          )}
+          {infoShown ? (
+            <IoInformationCircleSharp
+              className="info-icon"
+              onClick={() => setInfoShowen((prev) => !prev)}
+            />
+          ) : (
+            <IoInformationCircleOutline
+              className="info-icon"
+              onClick={() => setInfoShowen((prev) => !prev)}
+            />
+          )}
+        </div>
       </div>
-      <div className="messages"></div>
+      <div ref={msgRef} className="messages">
+        {[...messages].reverse().map((msg) => (
+          <Message message={msg} isMe={msg.user_id === user.id} key={msg.id} />
+        ))}
+      </div>
+      <div className="typing">
+        <FiPlusCircle className="add-icon" />
+        <input ref={typingRef} type="text" className="typing-area" />
+        <IoSend className="send" />
+      </div>
     </div>
   );
 }

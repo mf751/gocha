@@ -17,17 +17,39 @@
 .in-chat {
   align-self: flex-start;
   display: flex;
-  width: 450px;
+  align-items: flex-end;
+  justify-content: flex-end;
+  max-width: 490px;
+  height: 100dvh;
   /* padding: 0 20px; */
   flex-direction: column;
+  position: relative;
+  overflow-x: scroll;
 }
 
 .in-chat .header {
+  position: fixed;
+  top: 0;
+  max-width: 450px;
+  width: calc(100dvw - 40px);
   padding: 0 20px;
   display: flex;
   align-items: center;
+  justify-content: space-between;
   border-bottom: 1px solid var(--main-color);
-  height: 4rem;
+  height: 3rem;
+  background-color: var(--main-bg);
+}
+
+.in-chat .header .first-group {
+  display: flex;
+  align-items: center;
+}
+
+.in-chat .header .title {
+  display: flex;
+  align-items: center;
+  gap: 15px;
 }
 
 .in-chat .header .icon {
@@ -37,13 +59,72 @@
 }
 
 .in-chat .header h1 {
-  margin: 0 10px 0 0;
+  margin: 0;
   width: fit-content;
   flex-basis: 20%;
 }
 
+.in-chat .header .options {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.in-chat .header .info-icon {
+  width: 30px;
+  height: 30px;
+}
+
+.in-chat .header .options .add-icon {
+  width: 25px;
+  height: 25px;
+}
+
+.in-chat .typing {
+  position: fixed;
+  max-width: 450px;
+  width: calc(100dvw - 16px);
+  height: 50px;
+  /* background-color: var(--main-bg); */
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 8px;
+}
+
+.in-chat .typing .add-icon {
+  width: 30px;
+  height: 30px;
+}
+
+.in-chat .typing .typing-area {
+  /* width: ; */
+  flex-basis: 70%;
+}
+
+.in-chat .typing .send {
+  width: 30px;
+  height: 30px;
+}
+
 .in-chat .messages {
-  background-color: red;
-  width: 100%;
-  flex-basis: 80%;
+  margin-top: 48px;
+  display: flex;
+  flex-direction: column;
+  overflow-y: scroll;
+  max-width: 450px;
+  width: calc(100dvw - 40px);
+  padding: 0 20px 0;
+  margin: 60px 0;
+}
+
+.in-chat .messages .message {
+  display: flex;
+  gap: 10px;
+}
+
+.in-chat .messages .message .user .user-icon {
+  height: 35px;
+  width: 35px;
 }

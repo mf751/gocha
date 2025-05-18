@@ -17,9 +17,9 @@ type User struct {
 	ID        uuid.UUID `json:"id"`
 	CreateAt  Sent      `json:"created_at"`
 	Name      string    `json:"name"`
-	Email     string    `json:"email"`
+	Email     string    `json:"email,omitempty"`
 	Password  password  `json:"-"`
-	Activated bool      `json:"activated"`
+	Activated bool      `json:"activated,omitempty"`
 	// Version   int       `json:"-"`
 }
 
@@ -258,8 +258,9 @@ WITH member_counts AS (
   FROM users_chats
   GROUP BY chat_id
 )
-SELECT mc.member_count, chats.id, chats.name, chats.owner_id, chats.created_at, chats.is_private, messages.id, messages.sent, messages.user_id, messages.type, messages.content FROM users_chats
+SELECT users.name,mc.member_count, chats.id, chats.name, chats.owner_id, chats.created_at, chats.is_private, messages.id, messages.sent, messages.user_id, messages.type, messages.content FROM users_chats
 JOIN chats ON chats.id = users_chats.chat_id
+JOIN users ON users.id = users_chats.user_id
 JOIN member_counts mc ON mc.chat_id = chats.id
 LEFT JOIN LATERAL(
 	SELECT * FROM messages
@@ -285,22 +286,23 @@ ORDER BY messages.sent DESC NULLS LAST
 	for rows.Next() {
 		var chatWithLastMessage ChatWithLastMessage
 		err = rows.Scan(
+			&chatWithLastMessage.LastMessage.User.Name,
 			&chatWithLastMessage.Members,
 			&chatWithLastMessage.Chat.ID,
 			&chatWithLastMessage.Chat.Name,
 			&chatWithLastMessage.Chat.OwnerID,
 			&chatWithLastMessage.Chat.CreatedAt,
 			&chatWithLastMessage.Chat.IsPrivate,
-			&chatWithLastMessage.LastMessage.ID,
-			&chatWithLastMessage.LastMessage.Sent.Sent,
-			&chatWithLastMessage.LastMessage.UserID,
-			&chatWithLastMessage.LastMessage.Type.Int,
-			&chatWithLastMessage.LastMessage.Content.NullString,
+			&chatWithLastMessage.LastMessage.Message.ID,
+			&chatWithLastMessage.LastMessage.Message.Sent.Sent,
+			&chatWithLastMessage.LastMessage.Message.UserID,
+			&chatWithLastMessage.LastMessage.Message.Type.Int,
+			&chatWithLastMessage.LastMessage.Message.Content.NullString,
 		)
 		if err != nil {
 			return nil, err
 		}
-		chatWithLastMessage.LastMessage.ChatID = chatWithLastMessage.Chat.ID
+		chatWithLastMessage.LastMessage.Message.ChatID = chatWithLastMessage.Chat.ID
 		chatsWithLastMessage = append(chatsWithLastMessage, &chatWithLastMessage)
 	}
 

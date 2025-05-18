@@ -39,9 +39,9 @@ type ChatUser struct {
 }
 
 type ChatWithLastMessage struct {
-	Chat        Chat    `json:"chat"`
-	LastMessage Message `json:"last_message"`
-	Members     int     `json:"members"`
+	Chat        Chat            `json:"chat"`
+	LastMessage MessageWithUser `json:"last_message"`
+	Members     int             `json:"members"`
 }
 
 func ValidateChatName(vdtr *validator.Validator, name string) {
@@ -214,9 +214,13 @@ AND chat_id = $2
 	return nil
 }
 
-func (model ChatModel) GetChatMessage(chatID uuid.UUID, size, start int) ([]*Message, error) {
+func (model ChatModel) GetChatMessage(
+	chatID uuid.UUID,
+	size, start int,
+) ([]*MessageWithUser, error) {
 	sqlQuery := `
-SELECT id, user_id, content, sent, type FROM messages
+SELECT messages.id, messages.user_id, messages.content, messages.sent, messages.type, users.name FROM messages
+JOIN users ON users.id = messages.user_id 
 WHERE chat_id = $1
 AND deleted = false
 ORDER BY sent DESC
@@ -232,21 +236,22 @@ OFFSET $3
 	}
 	defer rows.Close()
 
-	var messages []*Message
+	var messages []*MessageWithUser
 
 	for rows.Next() {
-		var message Message
+		var message MessageWithUser
 		err = rows.Scan(
-			&message.ID,
-			&message.UserID,
-			&message.Content.NullString,
-			&message.Sent.Sent,
-			&message.Type.Int,
+			&message.Message.ID,
+			&message.User.ID,
+			&message.Message.Content.NullString,
+			&message.Message.Sent.Sent,
+			&message.Message.Type.Int,
+			&message.User.Name,
 		)
 		if err != nil {
 			return nil, err
 		}
-		message.ChatID = chatID
+		message.Message.ChatID = chatID
 		messages = append(messages, &message)
 	}
 

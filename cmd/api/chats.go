@@ -112,6 +112,8 @@ func (app *application) createChatHandler(w http.ResponseWriter, r *http.Request
 		return
 	}
 
+	user := app.contextGetUser(r)
+
 	if client, ok := app.manager.connectionClients[requestUser.ID]; ok {
 		var broadMessage NewMessageEvent
 		broadMessage.Message = message.Content.NullString.String
@@ -119,6 +121,7 @@ func (app *application) createChatHandler(w http.ResponseWriter, r *http.Request
 		broadMessage.ChatID = message.ChatID
 		broadMessage.Sent = message.Sent.Sent.Time
 		broadMessage.ID = message.ID
+		broadMessage.UserName = user.Name
 
 		sendData, err := json.Marshal(broadMessage)
 		if err != nil {
@@ -299,6 +302,7 @@ func (app *application) joinChatHandler(w http.ResponseWriter, r *http.Request) 
 	broadMessage.ChatID = message.ChatID
 	broadMessage.Sent = message.Sent.Sent.Time
 	broadMessage.ID = message.ID
+	broadMessage.UserName = user.Name
 
 	sendData, err := json.Marshal(broadMessage)
 	if err != nil {
@@ -337,9 +341,14 @@ func (app *application) leaveChatHandler(w http.ResponseWriter, r *http.Request)
 		ChatId uuid.UUID `json:"chat_id"`
 	}
 
-	app.readJSON(w, r, &input)
+	err := app.readJSON(w, r, &input)
+	if err != nil {
+		app.serverErrorResponse(w, r, err)
+		return
+	}
+
 	user := app.contextGetUser(r)
-	err := app.models.Chats.Leave(input.ChatId, user.ID)
+	err = app.models.Chats.Leave(input.ChatId, user.ID)
 	if err != nil {
 		switch {
 		case errors.Is(err, data.ErrNotInChat):
@@ -387,6 +396,7 @@ func (app *application) leaveChatHandler(w http.ResponseWriter, r *http.Request)
 	broadMessage.ChatID = message.ChatID
 	broadMessage.Sent = message.Sent.Sent.Time
 	broadMessage.ID = message.ID
+	broadMessage.UserName = user.Name
 
 	sendData, err := json.Marshal(broadMessage)
 	if err != nil {

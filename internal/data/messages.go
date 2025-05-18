@@ -21,6 +21,11 @@ type Message struct {
 	Type    Int32     `json:"type"`
 }
 
+type MessageWithUser struct {
+	Message Message `json:"message"`
+	User    User    `json:"user"`
+}
+
 type Content struct {
 	NullString sql.NullString
 }

@@ -21,9 +21,10 @@ const (
 )
 
 type NewMessageEvent struct {
-	Message string    `json:"message"`
-	ChatID  uuid.UUID `json:"chat_id"`
-	Sent    time.Time `json:"sent"`
-	From    uuid.UUID `json:"from"`
-	ID      uuid.UUID `json:"id"`
+	Message  string    `json:"message"`
+	ChatID   uuid.UUID `json:"chat_id"`
+	Sent     time.Time `json:"sent"`
+	From     uuid.UUID `json:"from"`
+	ID       uuid.UUID `json:"id"`
+	UserName string    `json:"user_name"`
 }

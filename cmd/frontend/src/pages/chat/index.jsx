@@ -27,24 +27,13 @@ export default function Chat() {
   const navigate = useNavigate();
   const [infoShown, setInfoShowen] = useState(false);
   const [userAddShown, setUserAddShown] = useState(false);
-  const typingRef = useRef(null);
-  const msgRef = useRef(null);
   const user = useSelector((state) => state.user.user);
+  const msgRef = useRef(null);
+  const formRef = useRef(null);
+  const [inputMessage, setInputMessage] = useState("");
+  const [loading, setLoading] = useState(true);
 
   if (chatsLoaded && chats.length === 0) navigate("/", { replace: true });
-
-  useEffect(() => {
-    if (messages.length === 0 || !chatsLoaded) return;
-    if (thisChat.last_message.id !== messages[0].id) {
-      setMessages((prev) => [thisChat.last_message, ...prev]);
-    }
-  }, [chats]);
-
-  useEffect(() => {
-    if (msgRef.current != null) {
-      msgRef.current.scrollTop = msgRef.current.scrollHeight;
-    }
-  }, [messages, chats]);
 
   useEffect(() => {
     (async () => {
@@ -61,6 +50,7 @@ export default function Chat() {
         const data = await res.json();
         if (!data.error) {
           setMessages(data.data);
+          setLoading(false);
         }
         if (data.error === "Not a membor of chat" || res.status != 200) {
           return setNotInChat(true);
@@ -73,6 +63,37 @@ export default function Chat() {
       }
     })();
   }, []);
+
+  useEffect(() => {
+    if (messages.length === 0 || !chatsLoaded) return;
+    if (thisChat.last_message.message.id !== messages[0].message.id) {
+      setMessages((prev) => [thisChat.last_message, ...prev]);
+    }
+  }, [chats]);
+
+  useEffect(() => {
+    if (msgRef.current != null) {
+      msgRef.current.scrollTop = msgRef.current.scrollHeight;
+    }
+  }, [messages, chats]);
+
+  function sendMessage() {
+    if (inputMessage === "") return;
+    (async () => {
+      const res = await fetch(`${APIURL}/v1/message`, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("authToken")}`,
+          "Content-Type": "application/json",
+        },
+        method: "POST",
+        body: JSON.stringify({
+          chat_id: thisChat.chat.id,
+          content: inputMessage,
+        }),
+      });
+    })();
+  }
+
   if (notInChat)
     return (
       <div className="error">
@@ -80,6 +101,7 @@ export default function Chat() {
         <Link to={"/"}>Return To Chats</Link>
       </div>
     );
+
   if (!chatsLoaded) {
     return (
       <div
@@ -94,6 +116,7 @@ export default function Chat() {
       </div>
     );
   }
+
   return (
     <div className="in-chat">
       <div className="header">
@@ -132,16 +155,37 @@ export default function Chat() {
           )}
         </div>
       </div>
+      {loading && (
+        <div className="loading">
+          <h1>Loading</h1>
+        </div>
+      )}
       <div ref={msgRef} className="messages">
         {[...messages].reverse().map((msg) => (
-          <Message message={msg} isMe={msg.user_id === user.id} key={msg.id} />
+          <Message
+            message={msg}
+            isMe={msg.user.id === user.id}
+            key={msg.message.id}
+          />
         ))}
       </div>
-      <div className="typing">
+      <form className="typing" action={sendMessage} ref={formRef}>
         <FiPlusCircle className="add-icon" />
-        <input ref={typingRef} type="text" className="typing-area" />
-        <IoSend className="send" />
-      </div>
+        <textarea
+          name="message"
+          className="typing-area"
+          onKeyDown={(e) => {
+            if (e.key === "Enter" && !e.shiftKey && e.target.value.trim()) {
+              e.preventDefault();
+              formRef.current.requestSubmit();
+            }
+          }}
+          onChange={(e) => setInputMessage(e.target.value)}
+        ></textarea>
+        <button type="submit">
+          <IoSend className="send" />
+        </button>
+      </form>
     </div>
   );
 }

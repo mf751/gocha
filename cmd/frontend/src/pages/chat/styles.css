@@ -31,8 +31,9 @@
   position: fixed;
   top: 0;
   max-width: 450px;
+  user-select: none;
   width: calc(100dvw - 40px);
-  padding: 0 20px;
+  padding: 0 20px 0;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -96,35 +97,118 @@
 .in-chat .typing .add-icon {
   width: 30px;
   height: 30px;
+  color: var(--accent);
 }
 
 .in-chat .typing .typing-area {
   /* width: ; */
   flex-basis: 70%;
+  resize: none;
+  background-color: transparent;
+  color: var(--main-color);
+  border: 1px solid var(--main-color);
+  border-radius: 8px;
+  padding: 8px;
+  font-size: 1rem;
+  overflow: scroll;
+  height: 1.2rem;
+  line-height: 1.1;
+  display: flex;
+  align-items: center;
+}
+
+.in-chat .typing .typing-area:focus {
+  outline: none;
+}
+
+.in-chat .typing button {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: transparent;
+  border: none;
+  padding: 0;
 }
 
 .in-chat .typing .send {
   width: 30px;
   height: 30px;
+  color: var(--accent);
+}
+
+.in-chat .loading {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  translate: -50% -50%;
+  user-select: none;
 }
 
 .in-chat .messages {
-  margin-top: 48px;
   display: flex;
   flex-direction: column;
   overflow-y: scroll;
+  overflow-x: hidden;
   max-width: 450px;
   width: calc(100dvw - 40px);
-  padding: 0 20px 0;
   margin: 60px 0;
+  /* gap: 0.742rem; */
 }
 
 .in-chat .messages .message {
   display: flex;
   gap: 10px;
+  max-width: 100%;
+  /* margin-top: -4px; */
+}
+
+.in-chat .messages .message.left {
+  align-self: flex-end;
+  margin-top: 8px;
+}
+
+.in-chat .messages .message .user {
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
 .in-chat .messages .message .user .user-icon {
   height: 35px;
   width: 35px;
+}
+
+.in-chat .message .content .user-name {
+  /* background-color: red; */
+  font-weight: bolder;
+  min-width: 100%;
+  margin: 0;
+  overflow: hidden;
+}
+
+.in-chat .message .content .container {
+  margin-top: -5px;
+  background-color: var(--login-field-bg);
+  padding: 0 0.5rem;
+  border-radius: 0px 8px 8px 8px;
+  display: flex;
+  flex-direction: column;
+}
+
+.in-chat .message .content .message-text {
+  padding-top: 5px;
+  line-height: 1.1;
+  max-width: 300px;
+  word-wrap: break-word;
+  /* width: 100px; */
+}
+
+.in-chat .message .content .message-time {
+  text-align: right;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.in-chat .message.left .content .message-time {
+  text-align: left;
 }

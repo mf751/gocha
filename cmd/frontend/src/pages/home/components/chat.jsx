@@ -14,8 +14,8 @@ export default function Chat({ chat, lastMessage }) {
       </div>
       <div className="info">
         <h3>{chat.name}</h3>
-        <p>{lastMessage.content}</p>
-        <span>{new Date(lastMessage.sent).toLocaleTimeString()}</span>
+        <p>{lastMessage.message.content}</p>
+        <span>{new Date(lastMessage.message.sent).toLocaleTimeString()}</span>
       </div>
     </div>
   );

@@ -34,7 +34,7 @@
 }
 
 :root[data-theme="dark"] {
-  --main-color: var(-d-main-color);
+  --main-color: var(--d-main-color);
   --main-bg: var(--d-main-bg);
   --login-field-bg: var(--d-login-field-bg);
   --login-filed-color: var(--d-login-field-color);

@@ -60,6 +60,7 @@ function App() {
   // Only runs once per user
   useEffect(() => {
     if (Object.keys(user).length !== 0) {
+      let socket;
       (async () => {
         try {
           const token = localStorage.getItem("authToken");
@@ -72,11 +73,14 @@ function App() {
           dispatch(setChats(data.data));
           dispatch(setLoaded(true));
           // only initiate the ws and the next useEffect will set the onmessage on every chats change
-          wsRef.current = new WebSocket(`${APIURL}/v1/ws?token=${token}`);
-          return () => wsRef.current.close();
+          socket = new WebSocket(`${APIURL}/v1/ws?token=${token}`);
+          wsRef.current = socket;
         } catch (error) {
           console.log(error);
         }
+        return () => {
+          if (socket) socket.close();
+        };
       })();
     }
   }, [user]);
@@ -92,17 +96,23 @@ function App() {
           chat: obj.chat,
           members: obj.members,
           last_message: {
-            chat_id: wsData.payload.chat_id,
-            content: wsData.payload.message,
-            id: wsData.payload.id,
-            user_id: wsData.payload.from,
-            sent: wsData.payload.sent,
-            type:
-              wsData.type === "new_message"
-                ? 1
-                : wsData.type === "joined_message"
-                  ? 50
-                  : 51,
+            message: {
+              chat_id: wsData.payload.chat_id,
+              content: wsData.payload.message,
+              id: wsData.payload.id,
+              sent: wsData.payload.sent,
+              user_name: wsData.payload.user_name,
+              type:
+                wsData.type === "new_message"
+                  ? 1
+                  : wsData.type === "joined_message"
+                    ? 50
+                    : 51,
+            },
+            user: {
+              id: wsData.payload.from,
+              name: wsData.payload.user_name,
+            },
           },
         };
       });

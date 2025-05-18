@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { FiSun, FiMoon } from "react-icons/fi";
 import "./styles.css";
-import { useEffect } from "react";
 
 export default function Theme() {
   const [theme, setTheme] = useState(() => localStorage.getItem("theme"));

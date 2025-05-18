@@ -21,6 +21,7 @@
   justify-content: flex-end;
   max-width: 490px;
   height: 100dvh;
+  width: 100dvw;
   /* padding: 0 20px; */
   flex-direction: column;
   position: relative;
@@ -150,7 +151,7 @@
   overflow-y: scroll;
   overflow-x: hidden;
   max-width: 450px;
-  width: calc(100dvw - 40px);
+  width: 100%;
   margin: 60px 0;
   /* gap: 0.742rem; */
 }
@@ -158,7 +159,7 @@
 .in-chat .messages .message {
   display: flex;
   gap: 10px;
-  max-width: 100%;
+  /* max-width: 90%; */
   /* margin-top: -4px; */
 }
 
@@ -176,6 +177,11 @@
 .in-chat .messages .message .user .user-icon {
   height: 35px;
   width: 35px;
+}
+
+.in-chat .message.left .content {
+  display: flex;
+  justify-content: flex-end;
 }
 
 .in-chat .message .content .user-name {
@@ -197,16 +203,21 @@
 
 .in-chat .message .content .message-text {
   padding-top: 5px;
-  line-height: 1.1;
-  max-width: 300px;
-  word-wrap: break-word;
-  /* width: 100px; */
+  max-width: 220px;
+  line-height: 20px;
+
+  display: inline-block;
+  overflow-wrap: break-word;
+  white-space: normal;
+  min-width: 0;
+  word-break: break-word;
 }
 
 .in-chat .message .content .message-time {
   text-align: right;
   font-size: 12px;
   font-weight: 700;
+  width: fit-content;
 }
 
 .in-chat .message.left .content .message-time {

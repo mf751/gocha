@@ -4,6 +4,8 @@
   width: 100%;
   max-width: 450px;
   align-self: flex-start;
+  height: 100dvh;
+  position: relative;
 }
 
 .chats h1 {
@@ -12,6 +14,16 @@
   text-align: center;
   border-bottom: 1px solid var(--main-color);
   user-select: none;
+}
+
+.chats .add-chat {
+  position: absolute;
+  bottom: 55px;
+  right: 50px;
+}
+.chats .add-chat .icon {
+  width: 40px;
+  height: 40px;
 }
 
 .chats .list {

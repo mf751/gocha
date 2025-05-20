@@ -27,11 +27,14 @@ function App() {
   // runs on every reroute
   useEffect(() => {
     const expiry = localStorage.getItem("expiry");
+    if (expiry === "") {
+      setLoading(false);
+    }
     if (expiry === null || new Date(expiry) < new Date()) {
       localStorage.setItem("expiry", "");
       localStorage.setItem("authToken", "");
-      navigate("/login", { replace: true });
       setLoading(false);
+      navigate("/login", { replace: true });
     }
     if (!loggedIn && localStorage.getItem("expiry") !== "") {
       const token = localStorage.getItem("authToken");
@@ -41,16 +44,19 @@ function App() {
             headers: { Authorization: `Bearer ${token}` },
           });
           const data = await res.json();
-          if (res.status !== 200) {
+          if (res.status !== 200 || data.error) {
             navigate("/login", { replace: true });
+            localStorage.setItem("expiry", "");
+            localStorage.setItem("authToken", "");
+            setLoading(false);
+          } else {
+            dispatch(setUser(data.user));
+            dispatch(setLoggedIn(true));
+            navigate(window.location.pathname, { replace: true });
             setLoading(false);
           }
-
-          dispatch(setUser(data.user));
-          dispatch(setLoggedIn(true));
-          navigate(window.location.pathname, { replace: true });
-          setLoading(false);
         } catch (error) {
+          console.log(error);
           setLoading(false);
         }
       })();

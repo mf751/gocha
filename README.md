@@ -17,4 +17,5 @@ For the **Websocket connections** Gorilla/websocket package is used with managin
 
 **The Frontend** is built using **React/JS** that handles all the UI and the requests and connections to the backend. And uses many packages like react-router for managing different routes and authorization, and react-redux for storing state like user and chats and messages, and react-icons for UI icons.
 ## Demo
-[Demo](./gocha-demo.mp4)
+[![Gocha demo](https://img.youtube.com/vi/PpjK_zWgtbM/0.jpg)](https://www.youtube.com/watch?v=PpjK_zWgtbM)
+

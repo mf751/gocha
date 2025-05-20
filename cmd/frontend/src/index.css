@@ -20,6 +20,9 @@
 
   --l-button-bg: var(--accent);
   --d-button-bg: #fff;
+
+  --l-transparent-msg: rgba(220, 220, 220, 0.5);
+  --d-transparent-msg: rgba(50, 50, 50, 0.5);
 }
 
 :root[data-theme="light"] {
@@ -29,6 +32,7 @@
   --login-filed-color: var(--l-login-field-color);
   --button-color: var(--l-button-color);
   --button-bg: var(--l-button-bg);
+  --transparent-msg: var(--l-transparent-msg);
   background-color: var(--main-bg);
   color: var(--main-color);
 }
@@ -40,6 +44,7 @@
   --login-filed-color: var(--d-login-field-color);
   --button-color: var(--d-button-color);
   --button-bg: var(--d-button-bg);
+  --transparent-msg: var(--d-transparent-msg);
   background-color: var(--main-bg);
   color: var(--main-color);
 }

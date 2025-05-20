@@ -45,12 +45,16 @@
 .in-chat .header .first-group {
   display: flex;
   align-items: center;
+  flex-basis: 80%;
 }
 
 .in-chat .header .title {
+  width: 100%;
+
   display: flex;
   align-items: center;
   gap: 15px;
+  overflow: hidden;
 }
 
 .in-chat .header .icon {
@@ -62,7 +66,6 @@
 .in-chat .header h1 {
   margin: 0;
   width: fit-content;
-  flex-basis: 20%;
 }
 
 .in-chat .header .options {
@@ -146,7 +149,7 @@
 .in-chat .messages {
   display: flex;
   flex-direction: column;
-  overflow-y: scroll;
+  /* overflow-y: scroll; */
   overflow-x: hidden;
   max-width: 450px;
   width: 100%;
@@ -220,4 +223,13 @@
 
 .in-chat .message.left .content .message-time {
   text-align: left;
+}
+
+.in-chat .message.transparent {
+  align-self: center;
+  background-color: var(--transparent-msg);
+  padding: 0 12px;
+  margin-bottom: 12px;
+  border-radius: 1rem;
+  font-weight: bolder;
 }

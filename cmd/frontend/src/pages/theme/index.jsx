@@ -32,6 +32,10 @@ export default function Theme() {
       "--button-bg",
       "var(--d-button-bg)",
     );
+    document.documentElement.style.setProperty(
+      "--transparent-msg",
+      "var(--d-transparent-msg)",
+    );
   } else {
     document.documentElement.style.setProperty(
       "--main-color",
@@ -53,6 +57,10 @@ export default function Theme() {
     document.documentElement.style.setProperty(
       "--button-bg",
       "var(--l-button-bg)",
+    );
+    document.documentElement.style.setProperty(
+      "--transparent-msg",
+      "var(--l-transparent-msg)",
     );
   }
 

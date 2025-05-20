@@ -1,6 +1,9 @@
 import { MdPerson } from "react-icons/md";
 
 export default function Message({ message, isMe }) {
+  if (message.message.type != 1) {
+    return <div className="message transparent">{message.message.content}</div>;
+  }
   if (isMe) {
     return (
       <div className="message left">
